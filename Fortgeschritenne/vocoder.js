@@ -132,13 +132,13 @@ class Vocoder extends AudioWorkletProcessor {
       const outputChannel = output[channel];
       for (let i = 0; i < inputChannel.length; ++i){
         // Distortion
-        //outputChannel[i] = Math.max(-1, Math.min(1,inputChannel[i]*5)) ; // Amplify and clamp       
+        outputChannel[i] = inputChannel[i];//Math.max(-1, Math.min(1,inputChannel[i]*5)) ; // Amplify and clamp       
       }
 
       // Fill buffers (overlapped)
       // Add buffers
       // Modify buffers
-      this.processBlock(outputChannel, inputChannel);
+      //this.processBlock(outputChannel, inputChannel);
     }
 
     this._countBlock++;
