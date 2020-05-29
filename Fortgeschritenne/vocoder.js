@@ -94,7 +94,7 @@ class Vocoder extends AudioWorkletProcessor {
           continue;
         }
         // EMA
-        synthBuffer[i] = buffer[i]*0.01 + synthBuffer[i-1]*0.99;
+        synthBuffer[i] = buffer[i];//buffer[i]*0.01 + synthBuffer[i-1]*0.99;
       }
     }
   }
@@ -113,8 +113,7 @@ class Vocoder extends AudioWorkletProcessor {
 
       // Hanning values
 
-      outBlock[i] = 0.5*this._pairSynthBuffer[indPair] +
-                    0.5*this._oddSynthBuffer[indOdd];
+      outBlock[i] = this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
     }
 
   }
