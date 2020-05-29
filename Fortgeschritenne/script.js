@@ -97,6 +97,7 @@ startDemo = () => {
     } else {
       soundSource.stop();
       vocoderNode.disconnect();
+      soundSource.disconnect();
       playing = false;
       playButton.innerText = 'Play sound';
     }
@@ -123,15 +124,15 @@ startDemo = () => {
   vocoderButton.onclick = pathVocoder = () => {
     if (vocoderButton.checked){
       if (playing){
-        soundSource.disconnect(audioCtx.destination);
-        soundSource.disconnect(analyser);
+        vocoderNode.disconnect();
+        soundSource.disconnect();
         soundSource.connect(vocoderNode).connect(audioCtx.destination);
         soundSource.connect(vocoderNode).connect(analyser);
       }
     } else {
       if (playing) {
-        vocoderNode.disconnect(audioCtx.destination);
-        soundSource.disconnect(vocoderNode);
+        vocoderNode.disconnect();
+        soundSource.disconnect();
         soundSource.connect(audioCtx.destination);
         soundSource.connect(analyser);
       }
