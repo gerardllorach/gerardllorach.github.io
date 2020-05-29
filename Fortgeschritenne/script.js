@@ -201,7 +201,7 @@ startDemo = () => {
       paintWave(workletBuffer);
       canvasCtx.translate(-wposW,-wposH);
 
-      wposW = canvas.height/2;
+      wposW = canvas.width/2;
       wposH = 500;
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer2);
