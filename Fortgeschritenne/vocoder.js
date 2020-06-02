@@ -9,7 +9,7 @@
 class Vocoder extends AudioWorkletProcessor {
 
   // currentFrame, currentTime and sampleRate are global variables of AudioWorkletProcessor
-  // TODO: check if currentFrame is always increasing (some frames might be processed twice?)
+  // currentFrame is does not give the same result as counting iterations (this._countBlock)
   constructor() {
     super();
     this._lastUpdate = currentTime;
@@ -18,6 +18,7 @@ class Vocoder extends AudioWorkletProcessor {
     const fSize = 0.02*sampleRate; 
     // Make the framesize multiple of 128 (audio render block size)
     this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize/sampleRate;
+    console.log("Frame size: " + this._frameSize);
     this._numBlocksInFrame = this._frameSize/128; // 8 at 48kHz and 20ms window
     // 50% overlap
     this._numBlocksOverlap = Math.floor(this._numBlocksInFrame/2); // 4 at 48kHz and 20ms window
@@ -65,12 +66,12 @@ class Vocoder extends AudioWorkletProcessor {
             0 1 2 3 4 - ind blockOdd
     */
     let indBlockPair = this._countBlock % this._modIndexBuffer;
-    if (indBlockPair <= this._numBlocksInFrame) // Only applies for odd numBlocksInFrame (a block is only assigned to a buffer in the middle of the frame)
+    if (indBlockPair <= this._numBlocksInFrame) // Only applies for odd numBlocksInFrame (a block is assigned to a single buffer only in the middle of the frame)
       this._pairBuffer.set(inputBlock, 128*indBlockPair); 
 
 
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
-    if (indBlockOdd <= this._numBlocksInFrame) // Only applies for odd numBlocksInFrame (a block is only assigned to a buffer in the middle of the frame)
+    if (indBlockOdd <= this._numBlocksInFrame) // Only applies for odd numBlocksInFrame (a block is assigned to a single buffer only in the middle of the frame)
       this._oddBuffer.set(inputBlock, 128*indBlockOdd);
 
     // Add: Get the output block from the mix of pairSynthBuff and oddSynthBuff
@@ -78,6 +79,7 @@ class Vocoder extends AudioWorkletProcessor {
 
 
     // Synthesize buffers -- Do modifications on the buffers (vocoder goes here)
+    // A synth buffer is only modified when a buffer is filled with new blocks
     this.synthesizeBuffer(indBlockPair, this._pairBuffer, this._pairSynthBuffer);
     this.synthesizeBuffer(indBlockOdd, this._oddBuffer, this._oddSynthBuffer);
   }
@@ -107,22 +109,35 @@ class Vocoder extends AudioWorkletProcessor {
   // Windowing and mixing odd and pair buffers
   synthesizeOutputBlock(outBlock, inputBlock) {
 
+    // Get block index for pair and odd buffers
+    /*
+    We want to get X: the current block to mix
+     0 0 0 X 0        --> Pair block
+         O X O O O    --> Odd block
+     o o o x ...      --> Synthesized block (outBlock)
+    */
     let indBlockPair = this._countBlock % this._modIndexBuffer;
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
 
-    // TODO: add hanning window here
+    // Iterate over the corresponding block of the synthesized buffers
     for (let i = 0; i<outBlock.length; i++){
       let indPair = i + 128*indBlockPair;
       let indOdd = i + 128*indBlockOdd;
 
-      // Hanning values
-// *************************************CURRENT POINT
-// CHECK WHAT IS GOING ON WITH THE BUFFERS!!
+
       //outBlock[i] = inputBlock[i];//this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
       this._block1[i] = this._pairSynthBuffer[indPair];
       this._block2[i] = this._oddSynthBuffer[indOdd];
+      // Synth block is average of pair and odd
+      //outBlock[i] = 0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
+      
+      // Hanning window
+      // Use hanning window sin^2(pi*n/N)
+      hannPairValue = Math.pow(Math.sin(Math.pi*indPair/this._frameSize), 2);
+      hannOddValue = Math.pow(Math.sin(Math.pi*indOdd/this._frameSize), 2);
+      // Hanning windowed frames addition
+      outBlock[i] = hannPairValue*this._pairSynthBuffer[indPair] + hannOddValue*this._oddSynthBuffer[indOdd];
 
-      outBlock[i] = 0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
     }
 
   }

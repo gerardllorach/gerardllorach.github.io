@@ -1,5 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- more info: https://github.com/mdn/webaudio-examples 
+https://mdn.github.io/webaudio-examples/iirfilter-node/
+https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletNode
+https://webaudioapi.com/samples/
+https://webaudioapi.com/samples/oscillator/
+
+Example of possibilities
+https://dood.al/pinktrombone/
+
+Audio worklet
+https://www.youtube.com/watch?v=g1L4O1smMC0
+https://googlechromelabs.github.io/web-audio-samples/audio-worklet/
+
+Paper Overlap and add, time stretching (offline)
+https://smartech.gatech.edu/bitstream/handle/1853/54587/WAC2016-48.pdf
+-->
+
+<!-- TODO
+
+
+- Analysis
+ - Extract LPC coefficients (next week)
+ - Store LPC coefficients (next week)
+ - Pitch
+
+- Synthesis
+ - Overlap and add (https://github.com/echo66/OLA-TS.js/blob/master/OLA.js)
+ https://github.com/danigb/timestretch
+ https://smartech.gatech.edu/bitstream/handle/1853/54587/WAC2016-48.pdf
+   - - Probably not possible. Will need to do data augmentation (add fake signals at the beginning and end of frames to be able to overlap them).
+ - Create pulse trains
+ - Use Oscillator or Audio sample
+ - Oscillator info can be from the links above
+ - Melody famous song?
+
+
+-->
   <head>
     <title>AudioWorklet Demo</title>
     <meta charset="utf-8">
