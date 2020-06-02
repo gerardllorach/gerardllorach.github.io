@@ -12,10 +12,16 @@ class Vocoder extends AudioWorkletProcessor {
   // currentFrame is does not give the same result as counting iterations (this._countBlock)
   constructor() {
     super();
+    // Initialize parameters
+    this.init(0.02);
+  }
+
+  // Frame duration in seconds
+  init(frameDuration){
     this._lastUpdate = currentTime;
 
     // Frame size (20ms)
-    const fSize = 0.02*sampleRate; 
+    const fSize = frameDuration*sampleRate; 
     // Make the framesize multiple of 128 (audio render block size)
     this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize/sampleRate;
     console.log("Frame size: " + this._frameSize);
@@ -38,16 +44,14 @@ class Vocoder extends AudioWorkletProcessor {
     // Count blocks
     this._countBlock = 0;
 
-
     // Computed buffers
     this._oddSynthBuffer = new Float32Array(this._frameSize);
     this._pairSynthBuffer = new Float32Array(this._frameSize);
 
-    // Block info
+    // Debbug: Block info
     this._block1 = new Float32Array(128);
     this._block2 = new Float32Array(128);
   }
-
 
 
 
@@ -65,16 +69,19 @@ class Vocoder extends AudioWorkletProcessor {
             3 4 5 6 7 - time, i.e. block count (blockOdd)
             0 1 2 3 4 - ind blockOdd
     */
+    // Get block index for the pair buffer
     let indBlockPair = this._countBlock % this._modIndexBuffer;
+    // Assign block to the pair buffer
     if (indBlockPair <= this._numBlocksInFrame) // Only applies for odd numBlocksInFrame (a block is assigned to a single buffer only in the middle of the frame)
       this._pairBuffer.set(inputBlock, 128*indBlockPair); 
 
-
+    // Get block index for the odd buffer
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
+    // Assign block to the buffer
     if (indBlockOdd <= this._numBlocksInFrame) // Only applies for odd numBlocksInFrame (a block is assigned to a single buffer only in the middle of the frame)
       this._oddBuffer.set(inputBlock, 128*indBlockOdd);
 
-    // Add: Get the output block from the mix of pairSynthBuff and oddSynthBuff
+    // Get the output block from the mix of pairSynthBuff and oddSynthBuff
     this.synthesizeOutputBlock(outBlock, inputBlock);
 
 
@@ -92,7 +99,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Only synthesize when it is filled
     if (indBlock == this._numBlocksInFrame - 1){
       for (let i = 0; i < buffer.length; i++){
-        // Do something
+        // Do something to the buffer (frame)
         //synthBuffer[i] = buffer[i];
         // Smooth
         if (i == 0){// Skip first sample
