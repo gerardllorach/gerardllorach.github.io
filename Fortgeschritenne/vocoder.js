@@ -133,8 +133,8 @@ class Vocoder extends AudioWorkletProcessor {
       
       // Hanning window
       // Use hanning window sin^2(pi*n/N)
-      hannPairValue = Math.pow(Math.sin(Math.pi*indPair/this._frameSize), 2);
-      hannOddValue = Math.pow(Math.sin(Math.pi*indOdd/this._frameSize), 2);
+      let hannPairValue = Math.pow(Math.sin(Math.pi*indPair/this._frameSize), 2);
+      let hannOddValue = Math.pow(Math.sin(Math.pi*indOdd/this._frameSize), 2);
       // Hanning windowed frames addition
       outBlock[i] = hannPairValue*this._pairSynthBuffer[indPair] + hannOddValue*this._oddSynthBuffer[indOdd];
 
