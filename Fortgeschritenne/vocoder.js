@@ -100,7 +100,9 @@ class Vocoder extends AudioWorkletProcessor {
           continue;
         }
         // EMA
-        synthBuffer[i] = buffer[i];//buffer[i]*0.01 + synthBuffer[i-1]*0.99;
+        synthBuffer[i] = buffer[i]*0.01 + synthBuffer[i-1]*0.99;
+        // No effect:
+        //synthBuffer[i] = buffer[i];
       }
     }
   }
@@ -124,20 +126,19 @@ class Vocoder extends AudioWorkletProcessor {
       let indPair = i + 128*indBlockPair;
       let indOdd = i + 128*indBlockOdd;
 
+      // Hanning window
+      // Use hanning window sin^2(pi*n/N)
+      let hannPairBValue = Math.pow(Math.sin(Math.PI*indPair/this._frameSize), 2);
+      let hannOddBValue = Math.pow(Math.sin(Math.PI*indOdd/this._frameSize), 2);
+      // Hanning windowed frames addition
+      outBlock[i] = hannPairBValue*this._pairSynthBuffer[indPair] + hannOddBValue*this._oddSynthBuffer[indOdd];
 
+
+
+      // Debugging
       //outBlock[i] = inputBlock[i];//this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
       this._block1[i] = this._pairSynthBuffer[indPair];
       this._block2[i] = this._oddSynthBuffer[indOdd];
-      // Synth block is average of pair and odd
-      //outBlock[i] = 0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
-      
-      // Hanning window
-      // Use hanning window sin^2(pi*n/N)
-      let hannPairValue = Math.pow(Math.sin(Math.PI*indPair/this._frameSize), 2);
-      let hannOddValue = Math.pow(Math.sin(Math.PI*indOdd/this._frameSize), 2);
-      // Hanning windowed frames addition
-      outBlock[i] = hannPairValue*this._pairSynthBuffer[indPair] + hannOddValue*this._oddSynthBuffer[indOdd];
-
     }
 
   }
