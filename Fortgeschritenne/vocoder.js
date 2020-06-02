@@ -118,9 +118,11 @@ class Vocoder extends AudioWorkletProcessor {
       // Hanning values
 // *************************************CURRENT POINT
 // CHECK WHAT IS GOING ON WITH THE BUFFERS!!
-      outBlock[i] = inputBlock[i];//this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
+      //outBlock[i] = inputBlock[i];//this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
       this._block1[i] = this._pairSynthBuffer[indPair];
       this._block2[i] = this._oddSynthBuffer[indOdd];
+
+      outBlock[i] = 0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
     }
 
   }
