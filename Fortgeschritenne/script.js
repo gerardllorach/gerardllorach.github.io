@@ -1,5 +1,5 @@
 // The main global scope
-console.log("v0.11");
+console.log("v0.12");
 
 // Variables
 
