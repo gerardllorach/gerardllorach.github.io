@@ -41,6 +41,10 @@ class Vocoder extends AudioWorkletProcessor {
     // Computed buffers
     this._oddSynthBuffer = new Float32Array(this._frameSize);
     this._pairSynthBuffer = new Float32Array(this._frameSize);
+
+    // Block info
+    this._block1 = new Float32Array(128);
+    this._block2 = new Float32Array(128);
   }
 
 
@@ -112,8 +116,11 @@ class Vocoder extends AudioWorkletProcessor {
       let indOdd = i + 128*indBlockOdd;
 
       // Hanning values
-
-      outBlock[i] = this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
+// *************************************CURRENT POINT
+// CHECK WHAT IS GOING ON WITH THE BUFFERS!!
+      outBlock[i] = inputBlock[i];//this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
+      this._block1[i] = this._pairSynthBuffer[indPair];
+      this._block2[i] = this._oddSynthBuffer[indOdd];
     }
 
   }
@@ -132,13 +139,13 @@ class Vocoder extends AudioWorkletProcessor {
       const outputChannel = output[channel];
       for (let i = 0; i < inputChannel.length; ++i){
         // Distortion
-        outputChannel[i] = inputChannel[i];//Math.max(-1, Math.min(1,inputChannel[i]*5)) ; // Amplify and clamp       
+        //outputChannel[i] = inputChannel[i];//Math.max(-1, Math.min(1,inputChannel[i]*5)) ; // Amplify and clamp       
       }
 
       // Fill buffers (overlapped)
       // Add buffers
       // Modify buffers
-      //this.processBlock(outputChannel, inputChannel);
+      this.processBlock(outputChannel, inputChannel);
     }
 
     this._countBlock++;
@@ -149,6 +156,8 @@ class Vocoder extends AudioWorkletProcessor {
       this.port.postMessage({
         buffer: this._oddSynthBuffer.slice(),
         bufferPair: this._pairSynthBuffer.slice(),
+        pairBlock: this._block1.slice(),
+        oddBlock: this._block2.slice(),
       });
        
     }
@@ -164,6 +173,8 @@ class Vocoder extends AudioWorkletProcessor {
         currentBlock: this._countBlock,
         buffer: this._oddSynthBuffer.slice(),
         bufferPair: this._pairSynthBuffer.slice(),
+        pairBlock: this._block1.slice(),
+        oddBlock: this._block2.slice(),
       });
       this._lastUpdate = currentTime;
       //this._oddBuffer.fill(0);

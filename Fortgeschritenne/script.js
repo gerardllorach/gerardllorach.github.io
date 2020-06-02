@@ -18,6 +18,8 @@ startDemo = () => {
   let vocoderNode = null;
   let workletBuffer = null;
   let workletBuffer2 = null;
+  let pBlock = null;
+  let oBlock = null;
   audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
     console.log("Vocoder audioworklet loaded...");
     vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
@@ -27,6 +29,8 @@ startDemo = () => {
       if (e.data.buffer !== undefined){
         workletBuffer = e.data.buffer;
         workletBuffer2 = e.data.bufferPair;
+        pBlock = e.data.pairBlock;
+        oBlock = e.data.oddBlock;
       }
       if (e.data.message == 'Update'){
         console.log(e.data);
@@ -206,6 +210,14 @@ startDemo = () => {
       wposH = 500;
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer2);
+      canvasCtx.translate(-wposW,-wposH);
+
+
+      wposW = canvas.width/2;
+      wposH = 100;
+      canvasCtx.translate(wposW,wposH);
+      paintWave(pBlock);
+      paintWave(oBlock);
       canvasCtx.translate(-wposW,-wposH);
     }
 
