@@ -20,14 +20,19 @@ class Vocoder extends AudioWorkletProcessor {
   init(frameDuration){
     this._lastUpdate = currentTime;
 
-    // Frame size (20ms)
+    // Frame duration (e.g., 0.02 s)
     const fSize = frameDuration*sampleRate; 
     // Make the framesize multiple of 128 (audio render block size)
     this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize/sampleRate;
-    console.log("Frame size: " + this._frameSize);
+    
     this._numBlocksInFrame = this._frameSize/128; // 8 at 48kHz and 20ms window
     // 50% overlap
     this._numBlocksOverlap = Math.floor(this._numBlocksInFrame/2); // 4 at 48kHz and 20ms window
+
+    console.log("Frame size: " + this._frameSize + 
+              ". Frame length: " + frameDuration + 
+              ". Blocks per frame: " + this._numBlocksInFrame +
+              ". Blocks overlap: " + this._numBlocksOverlap);
     
     // Define frame buffers
     this._oddBuffer = new Float32Array(this._frameSize); // previous and current are reused
@@ -82,7 +87,7 @@ class Vocoder extends AudioWorkletProcessor {
       this._oddBuffer.set(inputBlock, 128*indBlockOdd);
 
     // Get the output block from the mix of pairSynthBuff and oddSynthBuff
-    this.synthesizeOutputBlock(outBlock, inputBlock);
+    this.synthesizeOutputBlock(outBlock);
 
 
     // Synthesize buffers -- Do modifications on the buffers (vocoder goes here)
@@ -101,13 +106,13 @@ class Vocoder extends AudioWorkletProcessor {
       for (let i = 0; i < buffer.length; i++){
         // Do something to the buffer (frame)
         //synthBuffer[i] = buffer[i];
-        // Smooth
-        if (i == 0){// Skip first sample
+        // Smooth, EMA
+        if (i == 0){// Skip first sample (Or take it from previous buffer?)
           synthBuffer[i] = buffer[i];
-          continue;
+        } else {
+          // EMA
+          synthBuffer[i] = buffer[i]*0.01 + synthBuffer[i-1]*0.99;
         }
-        // EMA
-        synthBuffer[i] = buffer[i]*0.01 + synthBuffer[i-1]*0.99;
         // No effect:
         //synthBuffer[i] = buffer[i];
       }
@@ -116,17 +121,20 @@ class Vocoder extends AudioWorkletProcessor {
 
 
   // Windowing and mixing odd and pair buffers
-  synthesizeOutputBlock(outBlock, inputBlock) {
+  synthesizeOutputBlock(outBlock) {
 
     // Get block index for pair and odd buffers
     /*
     We want to get X: the current block to mix
      0 0 0 X 0        --> Pair block
-         O X O O O    --> Odd block
+           X O O O O  --> Odd block
      o o o x ...      --> Synthesized block (outBlock)
     */
     let indBlockPair = this._countBlock % this._modIndexBuffer;
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
+
+    // TODO: Right now this only works for 50% overlap and an even number of blocks per frame. 
+    // More modifications would be necessary to include less than 50% overlap and an odd number of blocks per frame
 
     // Iterate over the corresponding block of the synthesized buffers
     for (let i = 0; i<outBlock.length; i++){
@@ -143,7 +151,7 @@ class Vocoder extends AudioWorkletProcessor {
 
 
       // Debugging
-      //outBlock[i] = inputBlock[i];//this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
+      //outBlock[i] = this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
       this._block1[i] = this._pairSynthBuffer[indPair];
       this._block2[i] = this._oddSynthBuffer[indOdd];
     }

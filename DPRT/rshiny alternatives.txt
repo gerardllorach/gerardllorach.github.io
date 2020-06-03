@@ -1,0 +1,4 @@
+Speech recognition
+https://www.jumpingrivers.com/blog/voice-control-your-shiny-apps/
+Mouse
+https://stackoverflow.com/questions/39346273/how-to-place-shiny-panel-near-the-pointer-mouse/50623683
