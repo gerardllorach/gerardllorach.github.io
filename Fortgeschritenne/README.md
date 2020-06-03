@@ -54,6 +54,11 @@ indicies        0 1 2 3
 blockNum    0 1 X 3 4 5 ...
 ```
 
+A buffer is complete when its last 128 samples, i.e. its last block, are filled. In the above example, the pairBuffer would be filled when the blockNum 3 is reached. The oddBuffer would be filled in the blockNum 5. Once the buffer is filled, a full frame is obtained and operations can be done in it.
 
+### Output block: overlap and add routine
+In this app, we have an overlap of 50%. Therefore, we always need two frames to be able to provide an output. The output required by the AudioWorklet is a block of 128 samples. A first simple step is to ensure that we can provide the same input to the output using the overlap and add routine. In our code, we have allocated two buffers for the synthesis. These buffers (pairSynthBuffer and oddSynthBuffer) are filled when a full frame is obtained.
+
+Continue...
 
 
