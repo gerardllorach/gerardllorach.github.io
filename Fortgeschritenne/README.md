@@ -56,7 +56,7 @@ blockNum    0 1 X 3 4 5 ...
 
 A buffer is complete when its last 128 samples, i.e. its last block, are filled. In the above example, the pairBuffer would be filled when the blockNum 3 is reached. The oddBuffer would be filled in the blockNum 5. Once the buffer is filled, a full frame is obtained and operations can be done in it.
 
-### 6 Output block: overlap and add routine
+### 6) Output block: overlap and add routine
 In this app, I have an overlap of 50%. For an overlap of 50% or less, only two frames are required. In this code, I have allocated two buffers for the synthesis. These buffers (pairSynthBuffer and oddSynthBuffer) are computed each time a full frame is obtained (see previous section).
 
 The output block of the AudioWorklet has a size of 128 samples, as the input. I use a similar strategy as before, but instead of assigning the incoming block to the buffers, I use the synthesized buffers to compute the output block. I use a Hanning window to add the corresponding blocks of the synthesized buffers. The minimum delay of the system is one frame duration. Currently the application only works well for frames with an even number of blocks.
@@ -84,7 +84,6 @@ Sawtooth wave for a frame size of 1024
   /  |  /  |  /  |  /  |
 /    |/    |/    |/    |
 0...1024..2048..3072..4096...
-
 ```
 
 In order to play different audios in the app, the canvas has a drag a drop function: one can drag and drop and audio file in the web interface. The audio file is then loaded and displayed in the select list. Multiple audio files can also be dragged and dropped. Only ".wav" files are accepted. In my computer the Web Audio API works at 48 kHz, therefore I used audiofiles at 48 kHz to avoid latency issues.
