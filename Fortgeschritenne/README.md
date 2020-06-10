@@ -26,7 +26,31 @@ this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize
 
 In the current implementation I am using two buffers, which I call odd and pair. The pair buffer should be called "even", it was a translation mistake from catalan. The naming might change in following implementations.
 
-The even buffer stores the frames with even numbering (0,2,4,6,8...) and the odd buffer the odd ones (1,3,5,7,9...). In this implementations, I do 50% overlap, therefore only two buffers are needed. If more than two frames need to be overlapping, this code will not work. 
+The even buffer stores the frames with even numbering (0,2,4,6,8...) and the odd buffer the odd ones (1,3,5,7,9...). In this implementations, I do 50% overlap, therefore only two buffers are needed. If more than two frames need to be overlapping, this code will not work.
+
+```
+pairBuffer  0 0 0 0 -- Frame 0
+oddBuffer       O O O O -- Frame 1
+pairBuffer          0 0 0 0 -- Frame 2
+oddBuffer               O O O O -- Frame 3
+pairBuffer                  0 0 0 0 -- Frame 4
+oddBuffer                       O O O O -- Frame 5
+pairBuffer                          0 0 0 0 -- Frame 6
+oddBuffer                               O O O O -- Frame 7
+...
+```
+
+The previous digram can also be understood better when the block numbers (iteration) are shown:
+
+```
+pairBuffer  0 1 2 3 -- Frame 0
+oddBuffer       2 3 4 5 -- Frame 1
+pairBuffer          4 5 6 7 -- Frame 2
+oddBuffer               6 7 8 9 -- Frame 3
+pairBuffer                  8 9 10 11 -- Frame 4
+...
+```
+
 
 ### 5) Filling the buffers with blocks
 At each iteration, a new block of 128 samples arrive. This block is assigned to the two buffers, but in a different place of the buffer. Let's put an example with a frame size of 4 blocks and 50% overlap.
