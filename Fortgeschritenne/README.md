@@ -28,6 +28,30 @@ In the current implementation I am using two buffers, which I call odd and pair.
 
 The even buffer stores the frames with even numbering (0,2,4,6,8...) and the odd buffer the odd ones (1,3,5,7,9...). In this implementations, I do 50% overlap, therefore only two buffers are needed. If more than two frames need to be overlapping, this code will not work.
 
+```
+pairBuffer  0 0 0 0 -- Frame 0
+oddBuffer       O O O O -- Frame 1
+pairBuffer          0 0 0 0 -- Frame 2
+oddBuffer               O O O O -- Frame 3
+pairBuffer                  0 0 0 0 -- Frame 4
+oddBuffer                       O O O O -- Frame 5
+pairBuffer                          0 0 0 0 -- Frame 6
+oddBuffer                               O O O O -- Frame 7
+...
+```
+
+The previous digram can also be understood better when the block numbers (iteration) are shown:
+
+```
+pairBuffer  0 1 2 3 -- Frame 0
+oddBuffer       2 3 4 5 -- Frame 1
+pairBuffer          4 5 6 7 -- Frame 2
+oddBuffer               6 7 8 9 -- Frame 3
+pairBuffer                  8 9 10 11 -- Frame 4
+...
+```
+
+
 ### 5) Filling the buffers with blocks
 At each iteration, a new block of 128 samples arrive. This block is assigned to the two buffers, but in a different place of the buffer. Let's put an example with a frame size of 4 blocks and 50% overlap.
 ```
@@ -56,9 +80,44 @@ blockNum    0 1 X 3 4 5 ...
 
 A buffer is complete when its last 128 samples, i.e. its last block, are filled. In the above example, the pairBuffer would be filled when the blockNum 3 is reached. The oddBuffer would be filled in the blockNum 5. Once the buffer is filled, a full frame is obtained and operations can be done in it.
 
-### Output block: overlap and add routine
-In this app, we have an overlap of 50%. Therefore, we always need two frames to be able to provide an output. The output required by the AudioWorklet is a block of 128 samples. A first simple step is to ensure that we can provide the same input to the output using the overlap and add routine. In our code, we have allocated two buffers for the synthesis. These buffers (pairSynthBuffer and oddSynthBuffer) are filled when a full frame is obtained.
+### 6) Output block: overlap and add routine
+In this app, I have an overlap of 50%. For an overlap of 50% or less, only two frames are required. In this code, I have allocated two buffers for the synthesis. These buffers (pairSynthBuffer and oddSynthBuffer) are computed each time a full frame is obtained (see previous section).
 
-Continue...
+The output block of the AudioWorklet has a size of 128 samples, as the input. I use a similar strategy as before, but instead of assigning the incoming block to the buffers, I use the synthesized buffers to compute the output block. I use a Hanning window to add the corresponding blocks of the synthesized buffers. The minimum delay of the system is one frame duration. Currently the application only works well for frames with an even number of blocks.
+
+```
+...                
+Hanning          /´ ˆ `\
+pairSynthBuffer  0 0 X 0
+Hanning              /´ ˆ `\
+oddSynthBuffer       X O O O
+...
+
+```
+
+## Testing interface
+The front end contains very simple elements. A canvas (to plot signals); a button to play and pause the audio; a button to activate and deactivate the AudioWorklet processing; and a select list to choose from different audio signals.
+
+### Canvas
+In the canvas I plot can plot the frames, blocks and buffers used in the AudioWorklet in real-time. For some signals, this is not very helpful as each frame will have a different shape and I won't be able to see anything in real-time. But for testing purposes, I created a sawtooth wave, where every "tooth" has the size of an AudioWorklet frame, e.g., from 0 to 1 every 1024 samples and so on. With this signal, the frames always have the same shape at every iteration and the wave plot in the canvas is stable. Bear in mind that the sample rate of this signal has to be the same as the Web Audio API, in my case 48 kHz. A sawtooth wave with the size of a block (128 samples) was also used for testing the block size.
+
+```
+Sawtooth wave for a frame size of 1024
+
+    /|    /|    /|    /|
+  /  |  /  |  /  |  /  |
+/    |/    |/    |/    |
+0...1024..2048..3072..4096...
+```
+
+In order to play different audios in the app, the canvas has a drag a drop function: one can drag and drop and audio file in the web interface. The audio file is then loaded and displayed in the select list. Multiple audio files can also be dragged and dropped. Only ".wav" files are accepted. In my computer the Web Audio API works at 48 kHz, therefore I used audiofiles at 48 kHz to avoid latency issues.
+
+
+## Current state
+I am able to do the overlap and add without artifacts. This works with frames with an even number of blocks.
+
+Next step is to extract the LPC coefficients.
+
+Refactoring is needed.
 
 
