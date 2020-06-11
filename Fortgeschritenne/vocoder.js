@@ -57,6 +57,12 @@ class Vocoder extends AudioWorkletProcessor {
     // LPC coefficients
     this._lpcCoeff = [];
 
+    // Create impulse signal
+    this._impulseSignal = new Float32Array(this._frameSize);
+    for (let i = 0; i<4; i++){
+      this._impulseSignal[i*1024/4] = 1;
+    }
+
     // Debbug: Block info
     this._block1 = new Float32Array(128);
     this._block2 = new Float32Array(128);
@@ -122,16 +128,27 @@ class Vocoder extends AudioWorkletProcessor {
 
   LPCprocessing(inBuffer, outBuffer){
 
-    // TODO: compute energy (RMS) and pitch
-    this._lpcCoeff = this.LPCcoeff(inBuffer);
+    let M = 12;
 
-    // Impulse signal every 128 samples. Freq = fs/128; The frequency will be doubled because of the odd/pair buffer. ~ 375/2 Hz for 48kHz
-    outBuffer[0] = 1;
-    outBuffer[1] = 1;
-    outBuffer[2] = 1;
-    outBuffer[64] = 1;
-    outBuffer[65] = 1;
-    outBuffer[66] = 1;
+    // TODO: compute energy (RMS) and pitch
+    this._lpcCoeff = this.LPCcoeff(inBuffer, M);
+
+    // Filter
+    // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1]...
+    let y_prev = [];// As many zeros as M; // TODO: GARBAGE
+    for (let i=0; i< M; i++){
+      y_prev[i] = 0;
+    }
+
+    // Iterate for each sample. O(fSize*M)
+    for (let i = 0; i< inBuffer.length; i++){
+      outBuffer[i] = this._impulseSignal[i];
+      for (let j = 1; j<M+1; j++){
+        outBuffer[i] += y_prev[M-j]*this._lpcCoeff[j];
+      }
+      y_prev.shift(1);
+      y_prev.push(outBuffer[i]);
+    }
 
     return outBuffer;
 
@@ -142,9 +159,9 @@ class Vocoder extends AudioWorkletProcessor {
   and lattice algorithms. In 2004 IEEE International Conference on Acoustics, 
   Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE.
   */
-  LPCcoeff(inBuffer){
-        // Levene's method
-    let M = 12;
+  LPCcoeff(inBuffer, M){
+    // Levene's method
+    //let M = 12;
     // Autocorrelation values
     let phi = [];
     for (let i = 0; i<M+1; i++){
