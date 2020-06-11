@@ -1,5 +1,5 @@
 // The main global scope
-console.log("v0.12");
+console.log("v0.13");
 
 // Variables
 
@@ -21,18 +21,22 @@ startDemo = () => {
   let workletBuffer2 = null;
   let pBlock = null;
   let oBlock = null;
+  let lpcCoeff = null;
+
   audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
     console.log("Vocoder audioworklet loaded...");
     vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
     window.vN = vocoderNode;
     vocoderNode.port.onmessage = (e) => {
       //console.log(e.data);
+      // Every frame
       if (e.data.buffer !== undefined){
         workletBuffer = e.data.buffer;
         workletBuffer2 = e.data.bufferPair;
         pBlock = e.data.pairBlock;
         oBlock = e.data.oddBlock;
-      }
+        lpcCoeff = e.data.lpcCoeff;
+      } // Every second
       if (e.data.message == 'Update'){
         console.log(e.data);
       }
@@ -62,9 +66,9 @@ startDemo = () => {
 
   // Vocal tract filter
   let feedForward = [1],
-  feedBack = [1, -1.6685,    0.3762,    0.2547,    0.1319,    0.0317,   -0.0245,   -0.0428,   -0.0563,   -0.0250,    0.0000,    0.0185,    0.0356];
+  let feedBack = [1, -1.6685,    0.3762,    0.2547,    0.1319,    0.0317,   -0.0245,   -0.0428,   -0.0563,   -0.0250,    0.0000,    0.0185,    0.0356];
   // IIR filter
-  const iirfilter = audioCtx.createIIRFilter(feedForward, feedBack);
+  let iirfilter = audioCtx.createIIRFilter(feedForward, feedBack);
 
 
 
@@ -201,24 +205,34 @@ startDemo = () => {
 
     // Paint AudioworkletBuffer
     if (workletBuffer !== null && workletBuffer !== undefined){
+      // Plot pairBuffer
       wposW = 100;
       wposH = 500;
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer);
       canvasCtx.translate(-wposW,-wposH);
 
+      // Plot oddBuffer
       wposW = canvas.width/2;
       wposH = 500;
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer2);
       canvasCtx.translate(-wposW,-wposH);
 
-
+      // Plot block
       wposW = canvas.width/2;
       wposH = 100;
       canvasCtx.translate(wposW,wposH);
       paintWave(pBlock);
       paintWave(oBlock);
+      canvasCtx.translate(-wposW,-wposH);
+
+      // Plot LPC coefficients
+      wposW = canvas.width/2;
+      wposH = canvas.height/2;
+      canvasCtx.translate(wposW,wposH);
+      paintWave(lpcCoeff);
+      paintWave(lpcCoeff);
       canvasCtx.translate(-wposW,-wposH);
     }
 

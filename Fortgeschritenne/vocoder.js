@@ -30,7 +30,7 @@ class Vocoder extends AudioWorkletProcessor {
     this._numBlocksOverlap = Math.floor(this._numBlocksInFrame/2); // 4 at 48kHz and 20ms window
 
     console.log("Frame size: " + this._frameSize + 
-              ". Frame length: " + frameDuration + 
+              ". Frame length: " + frameDuration + " seconds" +
               ". Blocks per frame: " + this._numBlocksInFrame +
               ". Blocks overlap: " + this._numBlocksOverlap);
     
@@ -44,6 +44,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Instead of using full blocks, half blocks could be used. This also adds
     // another layer of complexity, so not much to gain...
     // Module denominator to compute the block index
+    // this line could be done with numBlocksInFrame%2?
     this._modIndexBuffer = this._numBlocksInFrame + Math.ceil(this._numBlocksInFrame/2) - Math.floor(this._numBlocksInFrame/2); // Adds 1 to numBlocksInFrame if it's odd, otherwise adds 0
 
     // Count blocks
@@ -52,6 +53,9 @@ class Vocoder extends AudioWorkletProcessor {
     // Computed buffers
     this._oddSynthBuffer = new Float32Array(this._frameSize);
     this._pairSynthBuffer = new Float32Array(this._frameSize);
+
+    // LPC coefficients
+    this._lpcCoeff = [];
 
     // Debbug: Block info
     this._block1 = new Float32Array(128);
@@ -103,21 +107,111 @@ class Vocoder extends AudioWorkletProcessor {
   synthesizeBuffer(indBlock, buffer, synthBuffer) {
     // Only synthesize when it is filled
     if (indBlock == this._numBlocksInFrame - 1){
-      for (let i = 0; i < buffer.length; i++){
-        // Do something to the buffer (frame)
-        //synthBuffer[i] = buffer[i];
-        // Smooth, EMA
-        if (i == 0){// Skip first sample (Or take it from previous buffer?)
-          synthBuffer[i] = buffer[i];
-        } else {
-          // EMA
-          synthBuffer[i] = buffer[i]*0.01 + synthBuffer[i-1]*0.99;
-        }
-        // No effect:
-        //synthBuffer[i] = buffer[i];
-      }
+
+      //bypass(buffer, synthBuffer);
+      //ema(buffer, synthBuffer);
+
+      LPCprocessing(buffer, synthBuffer);
+
+      // Empty buffer?
+      //buffer.fill(0);
     }
   }
+
+
+
+  LPCprocessing(inBuffer, outBuffer){
+
+    // TODO: compute energy (RMS) and pitch
+    this._lpcCoeff = LPCcoeff(inBuffer);
+
+    // Impulse signal every 128 samples. Freq = fs/128; The frequency will be doubled because of the odd/pair buffer. ~ 375/2 Hz for 48kHz
+    outBuffer[0] = 1;
+
+  }
+
+  // Based on Levinson proposal in:
+  /*Dutoit, T., 2004, May. Unusual teaching short-cuts to the Levinson 
+  and lattice algorithms. In 2004 IEEE International Conference on Acoustics, 
+  Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE.
+  */
+  LPCcoeff(inBuffer){
+        // Levene's method
+    let M = 12;
+    // Autocorrelation values
+    let phi = [];
+    for (let i = 0; i<M+1; i++){
+      phi[i] = autoCorr(inBuffer, i);
+    }
+
+    // M = 1
+    let a1_m = -phi[1] / phi[0];
+    // Iterate to calculate coefficients
+    let coeff = [1, a1_m];
+    let tempCoeff = [1, a1_m];
+
+    let mu = 0;
+    let alpha = 0;
+    let k = 0;
+    for (let m = 0; m < M-1; m++){
+        mu = 0;
+        alpha = 0;
+        // Calculate mu and alpha
+        for (let i = 0; i<m+2; i++){
+            mu += coeff[i]*phi[m+2-i];
+            alpha += coeff[i]*phi[i];
+        }
+        k = - mu / alpha;
+        // Calculate new coefficients
+        coeff[m+2] = 0;
+        for (let i = 1; i<m+3; i++){
+            tempCoeff[i] = coeff[i] + coeff[m+2-i]*k;
+        }
+        coeff = tempCoeff.slice();
+    }
+
+    return coeff;
+  }
+
+
+  // Autocorrelation function helper
+  autoCorr(buffer, delay){
+    let value = 0;
+    for (let i = 0; i< buffer.length - delay; i++){
+      // Because it is symmetric, I use "i + delay", not "i - delay"
+      value += buffer[i] * buffer[(i + delay)];
+    }
+    return value;
+  }
+
+
+
+
+
+
+
+  // Bypass. Checks for overlap and add artifacts
+  bypass(inBuffer, outBuffer){
+    for (let i = 0; i < buffer.length; i++){
+        outBuffer[i] = inBuffer[i];
+      }
+  }
+
+  // Exponential Moving Average filter. Needs last sample of the previous synth buffer
+  ema (inBuffer, outBuffer){
+    for (let i = 0; i < buffer.length; i++){
+      // Smooth, EMA
+      if (i == 0){// Skip first sample (Or take it from previous buffer?)
+        synthBuffer[i] = buffer[i];
+      } else {
+        synthBuffer[i] = buffer[i]*0.01 + synthBuffer[i-1]*0.99;
+       }
+    }
+  }
+
+
+
+
 
 
   // Windowing and mixing odd and pair buffers
@@ -134,7 +228,7 @@ class Vocoder extends AudioWorkletProcessor {
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
 
     // TODO: Right now this only works for 50% overlap and an even number of blocks per frame. 
-    // More modifications would be necessary to include less than 50% overlap and an odd number of blocks per frame
+    // More modifications would be necessary to include less than 50% overlap and an odd number of blocks per frame. Right now an amplitude modulation would appear for an odd number of blocks per frame (to be tested - AM from 1 to 0.5).
 
     // Iterate over the corresponding block of the synthesized buffers
     for (let i = 0; i<outBlock.length; i++){
@@ -191,6 +285,7 @@ class Vocoder extends AudioWorkletProcessor {
         bufferPair: this._pairSynthBuffer.slice(),
         pairBlock: this._block1.slice(),
         oddBlock: this._block2.slice(),
+        lpcCoeff: this._lpcCoeff.slice(),
       });
        
     }
