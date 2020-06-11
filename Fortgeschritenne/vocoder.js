@@ -142,7 +142,7 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Iterate for each sample. O(fSize*M)
     for (let i = 0; i< inBuffer.length; i++){
-      outBuffer[i] = this._impulseSignal[i];
+      outBuffer[i] = this._impulseSignal[i]*0.01;
       for (let j = 1; j<M+1; j++){
         outBuffer[i] += y_prev[M-j]*this._lpcCoeff[j];
       }
