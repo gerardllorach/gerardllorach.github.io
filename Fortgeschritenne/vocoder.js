@@ -111,7 +111,7 @@ class Vocoder extends AudioWorkletProcessor {
       //bypass(buffer, synthBuffer);
       //ema(buffer, synthBuffer);
 
-      this.LPCprocessing(buffer, synthBuffer);
+      synthBuffer = this.LPCprocessing(buffer, synthBuffer);
 
       // Empty buffer?
       //buffer.fill(0);
@@ -132,6 +132,8 @@ class Vocoder extends AudioWorkletProcessor {
     outBuffer[64] = 1;
     outBuffer[65] = 1;
     outBuffer[66] = 1;
+
+    return outBuffer;
 
   }
 
@@ -207,9 +209,9 @@ class Vocoder extends AudioWorkletProcessor {
     for (let i = 0; i < buffer.length; i++){
       // Smooth, EMA
       if (i == 0){// Skip first sample (Or take it from previous buffer?)
-        synthBuffer[i] = buffer[i];
+        outBuffer[i] = inBuffer[i];
       } else {
-        synthBuffer[i] = buffer[i]*0.01 + synthBuffer[i-1]*0.99;
+        outBuffer[i] = inBuffer[i]*0.01 + outBuffer[i-1]*0.99;
        }
     }
   }
