@@ -127,6 +127,11 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Impulse signal every 128 samples. Freq = fs/128; The frequency will be doubled because of the odd/pair buffer. ~ 375/2 Hz for 48kHz
     outBuffer[0] = 1;
+    outBuffer[1] = 1;
+    outBuffer[2] = 1;
+    outBuffer[64] = 1;
+    outBuffer[65] = 1;
+    outBuffer[66] = 1;
 
   }
 

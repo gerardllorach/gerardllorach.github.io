@@ -1,5 +1,5 @@
 // The main global scope
-console.log("v0.14");
+console.log("v0.15");
 
 // Variables
 
@@ -230,7 +230,7 @@ startDemo = () => {
       // Plot LPC coefficients
       if (lpcCoeff !== undefined){
         wposW = canvas.width/2;
-        wposH = canvas.height/2;
+        wposH = canvas.height/3;
         canvasCtx.translate(wposW,wposH);
         paintWave(lpcCoeff);
         paintWave(lpcCoeff);
