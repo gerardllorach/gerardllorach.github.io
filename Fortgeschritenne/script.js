@@ -228,12 +228,14 @@ startDemo = () => {
       canvasCtx.translate(-wposW,-wposH);
 
       // Plot LPC coefficients
-      wposW = canvas.width/2;
-      wposH = canvas.height/2;
-      canvasCtx.translate(wposW,wposH);
-      paintWave(lpcCoeff);
-      paintWave(lpcCoeff);
-      canvasCtx.translate(-wposW,-wposH);
+      if (lpcCoeff !== undefined){
+        wposW = canvas.width/2;
+        wposH = canvas.height/2;
+        canvasCtx.translate(wposW,wposH);
+        paintWave(lpcCoeff);
+        paintWave(lpcCoeff);
+        canvasCtx.translate(-wposW,-wposH);
+      }
     }
 
 
