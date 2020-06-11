@@ -55,7 +55,7 @@ class Vocoder extends AudioWorkletProcessor {
     this._pairSynthBuffer = new Float32Array(this._frameSize);
 
     // LPC coefficients
-    this._lpcCoeff = [];
+    this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     // Create impulse signal
     this._impulseSignal = new Float32Array(this._frameSize);
@@ -327,6 +327,7 @@ class Vocoder extends AudioWorkletProcessor {
         bufferPair: this._pairSynthBuffer.slice(),
         pairBlock: this._block1.slice(),
         oddBlock: this._block2.slice(),
+        lpcCoeff: this._lpcCoeff.slice(),
       });
       this._lastUpdate = currentTime;
       //this._oddBuffer.fill(0);
