@@ -329,6 +329,7 @@ class Vocoder extends AudioWorkletProcessor {
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
       });
+      console.log(this._lpcCoeff);
       this._lastUpdate = currentTime;
       //this._oddBuffer.fill(0);
     }
