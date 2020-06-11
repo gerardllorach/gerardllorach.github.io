@@ -111,7 +111,7 @@ class Vocoder extends AudioWorkletProcessor {
       //bypass(buffer, synthBuffer);
       //ema(buffer, synthBuffer);
 
-      LPCprocessing(buffer, synthBuffer);
+      this.LPCprocessing(buffer, synthBuffer);
 
       // Empty buffer?
       //buffer.fill(0);
@@ -123,7 +123,7 @@ class Vocoder extends AudioWorkletProcessor {
   LPCprocessing(inBuffer, outBuffer){
 
     // TODO: compute energy (RMS) and pitch
-    this._lpcCoeff = LPCcoeff(inBuffer);
+    this._lpcCoeff = this.LPCcoeff(inBuffer);
 
     // Impulse signal every 128 samples. Freq = fs/128; The frequency will be doubled because of the odd/pair buffer. ~ 375/2 Hz for 48kHz
     outBuffer[0] = 1;
@@ -141,7 +141,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Autocorrelation values
     let phi = [];
     for (let i = 0; i<M+1; i++){
-      phi[i] = autoCorr(inBuffer, i);
+      phi[i] = this.autoCorr(inBuffer, i);
     }
 
     // M = 1
