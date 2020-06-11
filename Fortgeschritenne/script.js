@@ -65,7 +65,7 @@ startDemo = () => {
 
 
   // Vocal tract filter
-  const feedForward = [1],
+  const feedForward = [1];
   const feedBack = [1, -1.6685,    0.3762,    0.2547,    0.1319,    0.0317,   -0.0245,   -0.0428,   -0.0563,   -0.0250,    0.0000,    0.0185,    0.0356];
   // IIR filter
   const iirfilter = audioCtx.createIIRFilter(feedForward, feedBack);
