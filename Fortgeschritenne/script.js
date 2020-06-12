@@ -6,12 +6,13 @@ console.log("v0.19");
 startDemo = () => {
   // Start audio context and declare variables
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audioCtx = new AudioContext();
+  //const audioCtx = new AudioContext();//new AudioContext({sampleRate:12000});
+  const audioCtx = new AudioContext({sampleRate:12000});
   let soundSource;
   let soundBuffer = {};
   const analyser = audioCtx.createAnalyser();
   analyser.fftSize = 2048;
-  console.log("Sampling rate: " + audioCtx.sampleRate);
+  console.log("Sampling rate: " + audioCtx.sampleRate + "Hz.");
   analyser.smoothingTimeConstant = 0.0;
   const waveBuffer = new Float32Array(analyser.fftSize);
   const prevWaveBuffer = new Float32Array(analyser.fftSize);
@@ -22,6 +23,7 @@ startDemo = () => {
   let pBlock = null;
   let oBlock = null;
   let lpcCoeff = null;
+  let kCoeff = null;
 
   audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
     console.log("Vocoder audioworklet loaded...");

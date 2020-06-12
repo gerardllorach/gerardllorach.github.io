@@ -56,6 +56,7 @@ class Vocoder extends AudioWorkletProcessor {
 
     // LPC coefficients
     this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    this._kCoeff = [];
 
     // Create impulse signal
     this._impulseSignal = new Float32Array(this._frameSize);
@@ -134,7 +135,8 @@ class Vocoder extends AudioWorkletProcessor {
     this._lpcCoeff = this.LPCcoeff(inBuffer, M);
 
     // Filter
-    // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1]...
+    // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
+    //y[n] = x[n] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
     let y_prev = [];// As many zeros as M; // TODO: GARBAGE
     for (let i=0; i< M; i++){
       y_prev[i] = 0;
@@ -142,12 +144,13 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Iterate for each sample. O(fSize*M)
     for (let i = 0; i< inBuffer.length; i++){
-      outBuffer[i] = this._impulseSignal[i]*0.01;
+      outBuffer[i] = this._impulseSignal[i]*0.1; // x[n]
       for (let j = 1; j<M+1; j++){
-        outBuffer[i] += y_prev[M-j]*this._lpcCoeff[j];
+        outBuffer[i] -= y_prev[M-j]*this._lpcCoeff[j]; // - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
       }
-      y_prev.shift(1);
-      y_prev.push(outBuffer[i]);
+      y_prev.shift(1); // Deletes first element of array
+      y_prev.push(outBuffer[i]); // Adds a new element at the end of the array
+      
     }
 
     return outBuffer;
@@ -160,7 +163,7 @@ class Vocoder extends AudioWorkletProcessor {
   Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE.
   */
   LPCcoeff(inBuffer, M){
-    // Levene's method
+    // Levinson's method
     //let M = 12;
     // Autocorrelation values
     let phi = [];
@@ -186,6 +189,7 @@ class Vocoder extends AudioWorkletProcessor {
             alpha += coeff[i]*phi[i];
         }
         k = - mu / alpha;
+        this._kCoeff[m] = k;
         // Calculate new coefficients
         coeff[m+2] = 0;
         for (let i = 1; i<m+3; i++){
@@ -198,11 +202,11 @@ class Vocoder extends AudioWorkletProcessor {
   }
 
 
-  // Autocorrelation function helper
+  // Autocorrelation function
   autoCorr(buffer, delay){
     let value = 0;
     for (let i = 0; i< buffer.length - delay; i++){
-      // Because it is symmetric, I use "i + delay", not "i - delay"
+      // Because autocorrelation is symmetric, I use "i + delay", not "i - delay"
       value += buffer[i] * buffer[(i + delay)];
     }
     return value;
@@ -310,6 +314,7 @@ class Vocoder extends AudioWorkletProcessor {
         pairBlock: this._block1.slice(),
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
+        kCoeff: this._kCoeff.slice(),
       });
        
     }
@@ -328,8 +333,8 @@ class Vocoder extends AudioWorkletProcessor {
         pairBlock: this._block1.slice(),
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
+        kCoeff: this._kCoeff.slice(),
       });
-      console.log(this._lpcCoeff);
       this._lastUpdate = currentTime;
       //this._oddBuffer.fill(0);
     }
