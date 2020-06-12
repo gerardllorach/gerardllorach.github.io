@@ -114,10 +114,10 @@ In order to play different audios in the app, the canvas has a drag a drop funct
 
 
 ## Vocoder
-I have implemented the Vocoder inside the AudioWorklet, where the overlap and add is also done. 
+I implemented the vocoder inside the AudioWorklet, where the overlap and add is also done. 
 
 ### Frame rate and blocks
-One of the first issues is that the vocoder will work better with a lower sampling frequency. In Chrome, one can specify the sampling frequency of the AudioContext. If the sampling rate is very low, it can be that one frame equals to one block. Because I am working with blocks to create frames, in this particular case there will be no overlap and add and some clicks might appear between frames. One possible solution would be to force a minimum of two blocks per frame. The other would be to work on a sample level.
+One of the first issues is that the vocoder will work better with a lower sampling frequency, preferably between 8kHz and 16kHz. By default, the sampling frequency of my browser is 48 kHz. But in Chrome, one can specify the sampling frequency of the AudioContext. Nevertheless, if the sampling rate is very low the app can run into problems. It can be that one frame equals to one block. Because I am working with blocks to create frames, in this particular case, there will be no "overlap and add" and some clicks might appear between frames. One possible solution would be to force a minimum of two blocks per frame. The other would be to work on a sample level, which would lead to more delay.
 
 ### LPC coefficients
 I implemented the LPC algorithm using the Levinson approach. It is described here: "Dutoit, T., 2004, May. Unusual teaching short-cuts to the Levinson and lattice algorithms. In 2004 IEEE International Conference on Acoustics, Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE."
@@ -190,10 +190,12 @@ where "y[n]" is the filtered signal, "x[n]" is the input signal, "b" are the fee
 y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
 ```
 
+to continue...
+
 ## Current state
 I am able to do the overlap and add without artifacts. This works with frames with an even number of blocks.
 
-Next step is to extract noise signal.
+Next step is to extract the residual signal.
 
 Refactoring is needed!!
 
