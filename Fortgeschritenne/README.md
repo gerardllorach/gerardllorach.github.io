@@ -99,7 +99,7 @@ oddSynthBuffer       X O O O
 The front end contains very simple elements. A canvas (to plot signals); a button to play and pause the audio; a button to activate and deactivate the AudioWorklet processing; and a select list to choose from different audio signals.
 
 ### Canvas
-In the canvas I plot can plot the frames, blocks and buffers used in the AudioWorklet in real-time. For some signals, this is not very helpful as each frame will have a different shape and I won't be able to see anything in real-time. But for testing purposes, I created a sawtooth wave, where every "tooth" has the size of an AudioWorklet frame, e.g., from 0 to 1 every 1024 samples and so on. With this signal, the frames always have the same shape at every iteration and the wave plot in the canvas is stable. Bear in mind that the sample rate of this signal has to be the same as the Web Audio API, in my case 48 kHz. A sawtooth wave with the size of a block (128 samples) was also used for testing the block size.
+In the canvas I plot can plot the frames, blocks and buffers used in the AudioWorklet in real-time. For most signals, this is not very helpful as each frame will have a different shape and I won't be able to see anything in real-time. But for testing purposes, I created a sawtooth wave, where every "tooth" has the size of an AudioWorklet frame, e.g., from 0 to 1 every 1024 samples and so on. With this signal, the frames always have the same shape at every iteration and the wave plot in the canvas is stable. Bear in mind that the sample rate of this signal has to be the same as the Web Audio API, in my case 48 kHz. A sawtooth wave with the size of a block (128 samples) was also used for testing the block size.
 
 ```
 Sawtooth wave for a frame size of 1024
@@ -113,11 +113,90 @@ Sawtooth wave for a frame size of 1024
 In order to play different audios in the app, the canvas has a drag a drop function: one can drag and drop and audio file in the web interface. The audio file is then loaded and displayed in the select list. Multiple audio files can also be dragged and dropped. Only ".wav" files are accepted. In my computer the Web Audio API works at 48 kHz, therefore I used audiofiles at 48 kHz to avoid latency issues.
 
 
+## Vocoder
+I implemented the vocoder inside the AudioWorklet, where the overlap and add is also done. 
+
+### Frame rate and blocks
+One of the first issues is that the vocoder will work better with a lower sampling frequency, preferably between 8kHz and 16kHz. By default, the sampling frequency of my browser is 48 kHz. But in Chrome, one can specify the sampling frequency of the AudioContext. Nevertheless, if the sampling rate is very low the app can run into problems. It can be that one frame equals to one block. Because I am working with blocks to create frames, in this particular case, there will be no "overlap and add" and some clicks might appear between frames. One possible solution would be to force a minimum of two blocks per frame. The other would be to work on a sample level, which would lead to more delay.
+
+### LPC coefficients
+I implemented the LPC algorithm using the Levinson approach. It is described here: "Dutoit, T., 2004, May. Unusual teaching short-cuts to the Levinson and lattice algorithms. In 2004 IEEE International Conference on Acoustics, Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE."
+
+For the algorithm, first I calculate the autocorrelation of the frame. I only need the autocorrelation values up to the size of the LPC coefficients (M). I used M=12 by default.
+
+```javascript
+// Autocorrelation function
+autoCorr(buffer, delay){
+  let value = 0;
+  for (let i = 0; i< buffer.length - delay; i++){
+    // Because autocorrelation is symmetric, I use "i + delay", not "i - delay"
+    value += buffer[i] * buffer[(i + delay)];
+  }
+  return value;
+}
+
+// Store autocorrelation values in array "phi"
+const phi=[];
+for (let i = 0; i<M+1; i++){
+  phi[i] = this.autoCorr(inBuffer, i);
+}
+```
+
+Once the autocorrelation values are computed, I can proceed with the Levinson algorithm. The algorithm works in a recursive manner: the coefficients are calculated in a similar way as Pascal's triangle (https://en.wikipedia.org/wiki/Pascal%27s_triangle). Please refer to the aforementioned article for a mathematical explanation.
+
+```javascript
+// M = 1
+let a1_m = -phi[1] / phi[0];
+// Iterate to calculate coefficients
+let coeff = [1, a1_m];
+let tempCoeff = [1, a1_m];
+
+let mu = 0;
+let alpha = 0;
+let k = 0;
+for (let m = 0; m < M-1; m++){
+    mu = 0;
+    alpha = 0;
+    // Calculate mu and alpha
+    for (let i = 0; i<m+2; i++){
+        mu += coeff[i]*phi[m+2-i];
+        alpha += coeff[i]*phi[i];
+    }
+    k = - mu / alpha;
+    // Calculate new coefficients
+    coeff[m+2] = 0;
+    for (let i = 1; i<m+3; i++){
+        tempCoeff[i] = coeff[i] + coeff[m+2-i]*k;
+    }
+    coeff = tempCoeff.slice();
+}
+
+return coeff;
+```
+
+The aforementioned code provides the LPC coefficients. In my implementation I also store the k coefficients, as there are interesting modifications and visualizations that one can do with them.
+
+### Using the LPC coefficients to filter an excitation signal
+A voiced signal can be synthesized by filtering an impulse signal and the LPC coefficients, based on the vocal tract model. The impulse signal defines the pitch and can look like this: 1, -1, 0, 0, 0, ... , 0, 0, 1, -1, 0, 0, 0... 
+
+The Web Audio API provides a filter node, the IIRFilterNode (https://www.w3.org/TR/webaudio/#iirfilternode). Unfortunatelly, the IIR filter defines the coefficients on its creation, and it is not designed to change the coefficients dynamically. As the Web Audio API says: "Once created, the coefficients of the IIR filter cannot be changed". An option would be to create a new IIRFilterNode for every frame, but that would be an overkill for the app (probably leading to garbage collector problems?). Therefore, I implemented the filter manually.
+
+An IIR filter with feedback coefficients (our LPC coefficients) has the form of:
+```javascript
+y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
+```
+where "y[n]" is the filtered signal, "x[n]" is the input signal, "b" are the feedforward coefficients and "a" are the feedback coefficients. In our case, "b[0]" and "a[0]" are 1.
+```javascript
+y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
+```
+
+to continue...
+
 ## Current state
 I am able to do the overlap and add without artifacts. This works with frames with an even number of blocks.
 
-Next step is to extract the LPC coefficients.
+Next step is to extract the residual signal.
 
-Refactoring is needed.
+Refactoring is needed!!
 
 
