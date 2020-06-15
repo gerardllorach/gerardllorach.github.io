@@ -300,7 +300,7 @@ startDemo = () => {
             var sName = ss[0];
 
             // For audio files
-            if (extension == "wav"){
+            if (extension == "wav" || extension == 'mp3'){
                 audioCtx.decodeAudioData(data, function(buffer) {
                   // Define audio buffer
                   soundBuffer[sName] = buffer;
