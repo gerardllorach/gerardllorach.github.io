@@ -38,6 +38,7 @@ startDemo = () => {
         pBlock = e.data.pairBlock;
         oBlock = e.data.oddBlock;
         lpcCoeff = e.data.lpcCoeff;
+	blockRMS = e.data.blockRMS;
       } // Every second
       if (e.data.message == 'Update'){
         console.log(e.data);
@@ -84,7 +85,7 @@ startDemo = () => {
       }
       soundSource = audioCtx.createBufferSource();
       soundSource.buffer = soundBuffer[selectAudioList.value];
-      
+
       // Destination and filtering
       /*if (!filteron){
         soundSource.connect(audioCtx.destination);
@@ -122,7 +123,7 @@ startDemo = () => {
         soundSource.disconnect(audioCtx.destination);
         soundSource.connect(iirfilter).connect(audioCtx.destination);
       }
-    
+
     } else {
       filteron = false;
       if (playing){
@@ -187,6 +188,17 @@ startDemo = () => {
   }
 
 
+  function drawRMSCircle(blockRMS){
+    let radius = 1000 * blockRMS;
+
+    canvasCtx.beginPath();
+    canvasCtx.lineWidth = "1";
+    canvasCtx.strokeStyle = "white";
+    canvasCtx.arc(0, 0, radius, 0, 2*Math.PI);
+    canvasCtx.stroke();
+  }
+
+
 
   // Paint loop
   function draw(dt)
@@ -238,6 +250,15 @@ startDemo = () => {
         paintWave(lpcCoeff);
         canvasCtx.translate(-wposW,-wposH);
       }
+
+      // visualize block RMS as circle with varying radius
+      if (blockRMS != undefined){
+	  wposW = canvas.width/4;
+	  wposH = canvas.height/3;
+          canvasCtx.translate(wposW,wposH);
+	  drawRMSCircle(blockRMS);
+	  canvasCtx.translate(-wposW,-wposH);
+      }
     }
 
 
@@ -270,7 +291,7 @@ startDemo = () => {
           var reader = new FileReader();
           reader.fname = file.name;
 
-          // Load files 
+          // Load files
           reader.addEventListener('load', function(e) {
               var data = e.target.result;
             var fileName = this.fname;
@@ -293,7 +314,7 @@ startDemo = () => {
           if (count == files.length){
             // All files loaded
             console.log(count + ' files dropped', 'success', 3);
-            
+
           }
           })
           reader.readAsArrayBuffer(file);
