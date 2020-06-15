@@ -60,22 +60,54 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Create impulse signal
     this._impulseSignal = new Float32Array(this._frameSize);
-    let numPulses = 8;
-    for (let i = 0; i<numPulses; i++){
-      this._impulseSignal[i*1024/numPulses] = 1;
-    }
+    this._pulseOffset = 0;
+    //let numPulses = 8;
+    //for (let i = 0; i<numPulses; i++){
+    //  this._impulseSignal[i*1024/numPulses] = 1;
+    //}
 
     // normalize impulse signal to RMS of 1
-    this._impulseSignalRMS = this.blockRMS(this._impulseSignal) // this could be circumvented since here the RMS is sqrt(framesize/numPulses), but wont hold for other excitation
-    for (let i = 0; i<1024; i++){
-      this._impulseSignal[i] = this._impulseSignal[i] / this._impulseSignalRMS
-    }
+    //this._impulseSignalRMS = this.blockRMS(this._impulseSignal); // this could be circumvented since here the RMS is sqrt(framesize/numPulses), but wont hold for other excitation
+    //for (let i = 0; i<1024; i++){
+    //  this._impulseSignal[i] = this._impulseSignal[i] / this._impulseSignalRMS;
+    //}
+
+    // autocorrelation indices for fundamental frequency estimation
+    this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
+    this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
 
     // Debbug: Block info
     this._block1 = new Float32Array(128);
     this._block2 = new Float32Array(128);
   }
 
+
+  createTonalExcitation(periodSamples, errorRMS){
+
+    // first write zeros
+    for (let i=0; i<this._frameSize; i++) {
+	this._impulseSignal[i] = 0;
+    }
+
+    // now create pulse train with given period
+    for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
+	this._impulseSignal[i] = 1;
+    }
+
+    // compute RMS of pulse train
+    this._impulseSignalRMS = this.blockRMS(this._impulseSignal);
+
+    let lastIndex = 0;
+
+    // scale each impulse to desired RMS
+    for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
+      this._impulseSignal[i] = errorRMS / this._impulseSignalRMS;
+      lastIndex = i;
+    }
+    this._pulseOffset = lastIndex + periodSamples - this._frameSize;
+
+    return this._impulseSignal;
+  }
 
 
   // Fill buffers
@@ -138,8 +170,10 @@ class Vocoder extends AudioWorkletProcessor {
 
     let M = 12;
 
-    // TODO: compute energy (RMS) and pitch
+
     this._lpcCoeff = this.LPCcoeff(inBuffer, M);
+    let periodSamples = this.autocorrPeriod(inBuffer);
+    this._fundFreq = sampleRate / periodSamples;
 
 
     let errorBuffer = new Float32Array(this._frameSize)
@@ -159,6 +193,8 @@ class Vocoder extends AudioWorkletProcessor {
 
     this._rms = this.blockRMS(errorBuffer);
 
+    this.createTonalExcitation(periodSamples, this._rms); // writes on this._impulseSignal
+
     // Filter
     // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
     //y[n] = x[n] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
@@ -169,7 +205,7 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Iterate for each sample. O(fSize*M)
     for (let i = 0; i< inBuffer.length; i++){
-      outBuffer[i] = this._impulseSignal[i]*this._rms; // x[n]
+      outBuffer[i] = this._impulseSignal[i]; // x[n]
       for (let j = 1; j<M+1; j++){
         outBuffer[i] -= y_prev[M-j]*this._lpcCoeff[j]; // - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
       }
@@ -182,6 +218,19 @@ class Vocoder extends AudioWorkletProcessor {
 
   }
 
+  autocorrPeriod(inBuffer) {
+
+    let phi = [];
+    for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
+      phi[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
+    }
+      // partially stolen from https://stackoverflow.com/questions/11301438/return-index-of-greatest-value-in-an-array
+      let maxIdx = this._lowerACFBound + phi.indexOf(Math.max(...phi)); // apparently '...' is a JS spread operator, like '*list' in python
+
+    //let fundFreq = sampleRate / maxIdx;
+
+    return maxIdx;
+  }
 
   blockRMS(inBuffer) {
     let squaredSum = 0;
@@ -353,6 +402,7 @@ class Vocoder extends AudioWorkletProcessor {
         lpcCoeff: this._lpcCoeff.slice(),
         kCoeff: this._kCoeff.slice(),
 	blockRMS: this._rms,
+	fundamentalFrequencyHz: this._fundFreq,
       });
 
     }
@@ -373,6 +423,7 @@ class Vocoder extends AudioWorkletProcessor {
         lpcCoeff: this._lpcCoeff.slice(),
         kCoeff: this._kCoeff.slice(),
 	blockRMS: this._rms,
+	fundamentalFrequencyHz: this._fundFreq,
       });
       this._lastUpdate = currentTime;
       //this._oddBuffer.fill(0);
