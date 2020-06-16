@@ -22,20 +22,20 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Frame information
     // Frame duration (e.g., 0.02 s)
-    const fSize = frameDuration*sampleRate; 
+    const fSize = frameDuration*sampleRate;
     // Make the framesize multiple of 128 (audio render block size)
     this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize/sampleRate;
-    
+
     this._numBlocksInFrame = this._frameSize/128; // 8 at 48kHz and 20ms window
     // Predefined 50% overlap
     this._numBlocksOverlap = Math.floor(this._numBlocksInFrame/2); // 4 at 48kHz and 20ms window
-  
+
     // Define frame buffers
     this._oddBuffer = new Float32Array(this._frameSize); // previous and current are reused
     this._pairBuffer = new Float32Array(this._frameSize); //  previous and current are reused
 
     // We want to reuse the two buffers. This part is a bit complicated and requires a detailed description
-    // Finding the block indices that belong to each buffer is complicated 
+    // Finding the block indices that belong to each buffer is complicated
     // for buffers with an odd num of blocks.
     // Instead of using full blocks, half blocks could be used. This also adds
     // another layer of complexity, so not much to gain...
@@ -70,9 +70,21 @@ class Vocoder extends AudioWorkletProcessor {
     // Create impulse signal
     // TODO: give more variability
     this._impulseSignal = new Float32Array(this._frameSize);
-    for (let i = 0; i<4; i++){
-      this._impulseSignal[i*1024/4] = 1;
-    }
+    this._pulseOffset = 0;
+    //let numPulses = 8;
+    //for (let i = 0; i<numPulses; i++){
+    //  this._impulseSignal[i*1024/numPulses] = 1;
+    //}
+
+    // normalize impulse signal to RMS of 1
+    //this._impulseSignalRMS = this.blockRMS(this._impulseSignal); // this could be circumvented since here the RMS is sqrt(framesize/numPulses), but wont hold for other excitation
+    //for (let i = 0; i<1024; i++){
+    //  this._impulseSignal[i] = this._impulseSignal[i] / this._impulseSignalRMS;
+    //}
+
+    // autocorrelation indices for fundamental frequency estimation
+    this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
+    this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
 
 
 
@@ -86,6 +98,33 @@ class Vocoder extends AudioWorkletProcessor {
 
   }
 
+
+  createTonalExcitation(periodSamples, errorRMS){
+
+    // first write zeros
+    for (let i=0; i<this._frameSize; i++) {
+	this._impulseSignal[i] = 0;
+    }
+
+    // now create pulse train with given period
+    for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
+	this._impulseSignal[i] = 1;
+    }
+
+    // compute RMS of pulse train
+    this._impulseSignalRMS = this.blockRMS(this._impulseSignal);
+
+    let lastIndex = 0;
+
+    // scale each impulse to desired RMS
+    for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
+      this._impulseSignal[i] = errorRMS / this._impulseSignalRMS;
+      lastIndex = i;
+    }
+    this._pulseOffset = lastIndex + periodSamples - this._frameSize;
+
+    return this._impulseSignal;
+  }
 
 
   // Fill buffers
@@ -106,7 +145,7 @@ class Vocoder extends AudioWorkletProcessor {
     let indBlockPair = this._countBlock % this._modIndexBuffer;
     // Assign block to the pair buffer
     if (indBlockPair <= this._numBlocksInFrame) // Only applies for odd numBlocksInFrame (a block is assigned to a single buffer only in the middle of the frame)
-      this._pairBuffer.set(inputBlock, 128*indBlockPair); 
+      this._pairBuffer.set(inputBlock, 128*indBlockPair);
 
     // Get block index for the odd buffer
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
@@ -146,8 +185,30 @@ class Vocoder extends AudioWorkletProcessor {
 
     let M = 12;
 
-    // TODO: compute energy (RMS) and pitch
+
     this._lpcCoeff = this.LPCcoeff(inBuffer, M);
+    let periodSamples = this.autocorrPeriod(inBuffer);
+    this._fundFreq = sampleRate / periodSamples;
+
+
+    let errorBuffer = new Float32Array(this._frameSize)
+    // compute error signal and its RMS
+
+    // Iterate for each sample. O(fSize*M)
+    for (let i = 0; i< inBuffer.length; i++){
+      for (let j = 0; j<M+1; j++){
+	let in_idx = i + j; // i don't really know what should happen in this case, add zeros?
+	  if (in_idx >= inBuffer.length){
+	    in_idx -= inBuffer.length;
+	  }
+          errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
+      }
+    }
+
+
+    this._rms = this.blockRMS(errorBuffer);
+
+    this.createTonalExcitation(periodSamples, this._rms); // writes on this._impulseSignal
 
     // Filter
     // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
@@ -159,22 +220,47 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Iterate for each sample. O(fSize*M)
     for (let i = 0; i< inBuffer.length; i++){
-      outBuffer[i] = this._impulseSignal[i]*0.1; // x[n]
+      outBuffer[i] = this._impulseSignal[i]; // x[n]
       for (let j = 1; j<M+1; j++){
         outBuffer[i] -= y_prev[M-j]*this._lpcCoeff[j]; // - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
       }
       y_prev.shift(1); // Deletes first element of array
       y_prev.push(outBuffer[i]); // Adds a new element at the end of the array
-      
+
     }
 
     return outBuffer;
 
   }
 
+  autocorrPeriod(inBuffer) {
+
+    let phi = [];
+    for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
+      phi[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
+    }
+      // partially stolen from https://stackoverflow.com/questions/11301438/return-index-of-greatest-value-in-an-array
+      let maxIdx = this._lowerACFBound + phi.indexOf(Math.max(...phi)); // apparently '...' is a JS spread operator, like '*list' in python
+
+    //let fundFreq = sampleRate / maxIdx;
+
+    return maxIdx;
+  }
+
+  blockRMS(inBuffer) {
+    let squaredSum = 0;
+    for (let i = 0; i < inBuffer.length; i++){
+      squaredSum += inBuffer[i] * inBuffer[i];
+    }
+    let meanValue = squaredSum / inBuffer.length;
+    let rmsValue = Math.sqrt(meanValue);
+
+    return rmsValue;
+  }
+
   // Based on Levinson proposal in:
-  /*Dutoit, T., 2004, May. Unusual teaching short-cuts to the Levinson 
-  and lattice algorithms. In 2004 IEEE International Conference on Acoustics, 
+  /*Dutoit, T., 2004, May. Unusual teaching short-cuts to the Levinson
+  and lattice algorithms. In 2004 IEEE International Conference on Acoustics,
   Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE.
   */
   LPCcoeff(inBuffer, M){
@@ -270,7 +356,7 @@ class Vocoder extends AudioWorkletProcessor {
     let indBlockPair = this._countBlock % this._modIndexBuffer;
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
 
-    // TODO: Right now this only works for 50% overlap and an even number of blocks per frame. 
+    // TODO: Right now this only works for 50% overlap and an even number of blocks per frame.
     // More modifications would be necessary to include less than 50% overlap and an odd number of blocks per frame. Right now an amplitude modulation would appear for an odd number of blocks per frame (to be tested - AM from 1 to 0.5).
 
     // Iterate over the corresponding block of the synthesized buffers
@@ -328,8 +414,10 @@ class Vocoder extends AudioWorkletProcessor {
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
         kCoeff: this._kCoeff.slice(),
+	      blockRMS: this._rms,
+	      fundamentalFrequencyHz: this._fundFreq,
       });
-       
+
     }
 
 
@@ -347,6 +435,8 @@ class Vocoder extends AudioWorkletProcessor {
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
         kCoeff: this._kCoeff.slice(),
+	blockRMS: this._rms,
+	fundamentalFrequencyHz: this._fundFreq,
       });
       this._lastUpdate = currentTime;
     }
