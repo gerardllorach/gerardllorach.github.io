@@ -1,23 +1,57 @@
 // The main global scope
 console.log("v0.19");
 
-// Variables
 
 startDemo = () => {
-  // Start audio context and declare variables
+  // Start AudioContext
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  //const audioCtx = new AudioContext();//new AudioContext({sampleRate:12000});
   const audioCtx = new AudioContext({sampleRate:12000});
-  let soundSource;
-  let soundBuffer = {};
+  // AudioContext nodes
+  // Analyser node - Gets the wave buffer (and fft) on the main thread
   const analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 2048;
-  console.log("Sampling rate: " + audioCtx.sampleRate + "Hz.");
   analyser.smoothingTimeConstant = 0.0;
-  const waveBuffer = new Float32Array(analyser.fftSize);
-  const prevWaveBuffer = new Float32Array(analyser.fftSize);
-  // Load AudioWorklet
+  analyser.fftSize = 2048;
+  // Sound source node (buffer source)
+  let soundSource;
+  // Stores the buffers of the dragged audio files
+  let soundBuffer = {};
+
+  // Log AudioContext sampling rate
+  console.log("Sampling rate: " + audioCtx.sampleRate + "Hz.");
+  
+  // Create and load AudioWorklet node
   let vocoderNode = null;
+  audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
+    console.log("Vocoder audioworklet loaded...");
+    vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
+    
+    // Receive message from AudioWorklet Node
+    vocoderNode.port.onmessage = (e) => {
+      // Get information at every frame
+      if (e.data.buffer !== undefined){
+        workletBuffer = e.data.buffer;
+        workletBuffer2 = e.data.bufferPair;
+        pBlock = e.data.pairBlock;
+        oBlock = e.data.oddBlock;
+        lpcCoeff = e.data.lpcCoeff;
+      } // Get information every second
+      if (e.data.message == 'Update'){
+        console.log(e.data);
+      }
+    };
+  });
+
+
+
+
+  // App control variables
+  let playing = false;
+
+
+
+  // Variables for displaying information on canvas
+  // Wave buffer for painting
+  const waveBuffer = new Float32Array(analyser.fftSize);
   let workletBuffer = null;
   let workletBuffer2 = null;
   let pBlock = null;
@@ -25,33 +59,10 @@ startDemo = () => {
   let lpcCoeff = null;
   let kCoeff = null;
 
-  audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
-    console.log("Vocoder audioworklet loaded...");
-    vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
-    window.vN = vocoderNode;
-    vocoderNode.port.onmessage = (e) => {
-      //console.log(e.data);
-      // Every frame
-      if (e.data.buffer !== undefined){
-        workletBuffer = e.data.buffer;
-        workletBuffer2 = e.data.bufferPair;
-        pBlock = e.data.pairBlock;
-        oBlock = e.data.oddBlock;
-        lpcCoeff = e.data.lpcCoeff;
-      } // Every second
-      if (e.data.message == 'Update'){
-        console.log(e.data);
-      }
-    };
-    //oscillator.connect(bypasser).connect(context.destination);
-    //oscillator.start();
-  });
-
 
 
   // DOM elements
   const playButton = document.getElementById("playButton");
-  const filterButton = document.getElementById("filterButton");
   const vocoderButton = document.getElementById("vocoderButton");
   const selSoundContainer = document.getElementById("selSoundContainer");
   const selectAudioList = document.getElementById("selectAudio");
@@ -61,16 +72,7 @@ startDemo = () => {
   canvas.width = document.body.clientWidth;
   canvas.height = document.body.clientHeight;
 
-  // App control variables
-  let playing = false;
-  let filteron = false;
 
-
-  // Vocal tract filter
-  const feedForward = [1];
-  const feedBack = [1, -1.6685,    0.3762,    0.2547,    0.1319,    0.0317,   -0.0245,   -0.0428,   -0.0563,   -0.0250,    0.0000,    0.0185,    0.0356];
-  // IIR filter
-  const iirfilter = audioCtx.createIIRFilter(feedForward, feedBack);
 
 
 
@@ -85,12 +87,7 @@ startDemo = () => {
       soundSource = audioCtx.createBufferSource();
       soundSource.buffer = soundBuffer[selectAudioList.value];
       
-      // Destination and filtering
-      /*if (!filteron){
-        soundSource.connect(audioCtx.destination);
-      } else{
-        soundSource.connect(iirfilter).connect(audioCtx.destination);
-      }*/
+
       // Vocoder destination
       if (!vocoderButton.checked){
         soundSource.connect(audioCtx.destination);
@@ -115,22 +112,7 @@ startDemo = () => {
   }
 
 
-  filterButton.onclick = () => {
-    /*if (filteron == false) {
-      filteron = true;
-      if (playing){
-        soundSource.disconnect(audioCtx.destination);
-        soundSource.connect(iirfilter).connect(audioCtx.destination);
-      }
-    
-    } else {
-      filteron = false;
-      if (playing){
-        soundSource.disconnect(iirfilter);
-        soundSource.connect(audioCtx.destination);
-      }
-    }*/
-  }
+
 
   vocoderButton.onclick = pathVocoder = () => {
     if (vocoderButton.checked){

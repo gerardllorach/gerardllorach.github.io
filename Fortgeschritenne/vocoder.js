@@ -16,24 +16,20 @@ class Vocoder extends AudioWorkletProcessor {
     this.init(0.02);
   }
 
-  // Frame duration in seconds
+  // input: Frame duration in seconds
   init(frameDuration){
-    this._lastUpdate = currentTime;
+    // Initialize variables
 
+    // Frame information
     // Frame duration (e.g., 0.02 s)
     const fSize = frameDuration*sampleRate; 
     // Make the framesize multiple of 128 (audio render block size)
     this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize/sampleRate;
     
     this._numBlocksInFrame = this._frameSize/128; // 8 at 48kHz and 20ms window
-    // 50% overlap
+    // Predefined 50% overlap
     this._numBlocksOverlap = Math.floor(this._numBlocksInFrame/2); // 4 at 48kHz and 20ms window
-
-    console.log("Frame size: " + this._frameSize + 
-              ". Frame length: " + frameDuration + " seconds" +
-              ". Blocks per frame: " + this._numBlocksInFrame +
-              ". Blocks overlap: " + this._numBlocksOverlap);
-    
+  
     // Define frame buffers
     this._oddBuffer = new Float32Array(this._frameSize); // previous and current are reused
     this._pairBuffer = new Float32Array(this._frameSize); //  previous and current are reused
@@ -44,8 +40,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Instead of using full blocks, half blocks could be used. This also adds
     // another layer of complexity, so not much to gain...
     // Module denominator to compute the block index
-    // this line could be done with numBlocksInFrame%2?
-    this._modIndexBuffer = this._numBlocksInFrame + Math.ceil(this._numBlocksInFrame/2) - Math.floor(this._numBlocksInFrame/2); // Adds 1 to numBlocksInFrame if it's odd, otherwise adds 0
+    this._modIndexBuffer = this._numBlocksInFrame + this._numBlocksInFrame % 2; // Adds 1 to numBlocksInFrame if it's odd, otherwise adds 0
 
     // Count blocks
     this._countBlock = 0;
@@ -54,19 +49,41 @@ class Vocoder extends AudioWorkletProcessor {
     this._oddSynthBuffer = new Float32Array(this._frameSize);
     this._pairSynthBuffer = new Float32Array(this._frameSize);
 
-    // LPC coefficients
-    this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    this._kCoeff = [];
+    console.log("Frame size: " + this._frameSize + 
+          ". Set frame length: " + this._frameSize/sampleRate + " seconds" +
+          ". Desired frame length: " + frameDuration + " seconds" +
+          ". Blocks per frame: " + this._numBlocksInFrame +
+          ". Blocks overlap: " + this._numBlocksOverlap);
 
+
+
+
+    // LCP variables
+    // LPC filter coefficients
+    this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    // LPC k coefficients
+    this._kCoeff = [];
+    // Filter samples
+    this._prevY = [];
+
+    // Synthesis
     // Create impulse signal
+    // TODO: give more variability
     this._impulseSignal = new Float32Array(this._frameSize);
     for (let i = 0; i<4; i++){
       this._impulseSignal[i*1024/4] = 1;
     }
 
-    // Debbug: Block info
+
+
+
+    // Debug
+    // Timer to give updates to the main thread
+    this._lastUpdate = currentTime;
+    // Block info
     this._block1 = new Float32Array(128);
     this._block2 = new Float32Array(128);
+
   }
 
 
@@ -120,8 +137,6 @@ class Vocoder extends AudioWorkletProcessor {
 
       synthBuffer = this.LPCprocessing(buffer, synthBuffer);
 
-      // Empty buffer?
-      //buffer.fill(0);
     }
   }
 
@@ -137,7 +152,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Filter
     // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
     //y[n] = x[n] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
-    let y_prev = [];// As many zeros as M; // TODO: GARBAGE
+    let y_prev = this._prevY;// As many zeros as M; //
     for (let i=0; i< M; i++){
       y_prev[i] = 0;
     }
@@ -282,7 +297,7 @@ class Vocoder extends AudioWorkletProcessor {
 
 
 
-
+  // Main function
   process(inputs, outputs) {
     // By default, the node has single input and output.
     const input = inputs[0];
@@ -292,14 +307,12 @@ class Vocoder extends AudioWorkletProcessor {
 
       const inputChannel = input[channel];
       const outputChannel = output[channel];
-      for (let i = 0; i < inputChannel.length; ++i){
+      //for (let i = 0; i < inputChannel.length; ++i){
         // Distortion
         //outputChannel[i] = inputChannel[i];//Math.max(-1, Math.min(1,inputChannel[i]*5)) ; // Amplify and clamp       
-      }
+      //}
 
-      // Fill buffers (overlapped)
-      // Add buffers
-      // Modify buffers
+      // Process block
       this.processBlock(outputChannel, inputChannel);
     }
 
@@ -336,7 +349,6 @@ class Vocoder extends AudioWorkletProcessor {
         kCoeff: this._kCoeff.slice(),
       });
       this._lastUpdate = currentTime;
-      //this._oddBuffer.fill(0);
     }
 
 
