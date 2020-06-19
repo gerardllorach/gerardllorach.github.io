@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- more info: https://github.com/mdn/webaudio-examples 
+<!-- more info: https://github.com/mdn/webaudio-examples
 https://mdn.github.io/webaudio-examples/iirfilter-node/
 https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletNode
 https://webaudioapi.com/samples/
@@ -56,10 +56,10 @@ DONE:
     <style type='text/css'>
       html, body { width: 100%; height: 100%; margin: 0; padding: 0 ; background-color: black; overflow: hidden;}
     </style>
-    
+
     <!-- import the webpage's javascript file -->
     <script src="script.js"></script>
-  </head>  
+  </head>
   <body>
 
   <!-- CANVAS -->
@@ -71,6 +71,9 @@ DONE:
       <!-- Play button -->
       <div class="row">
         <button id="playButton" type="button" class="btn btn-primary" style="position:relative; z-index: 3">Play Sound</button>
+      </div>
+      <div class="row">
+	<input id="inputButton" type="checkbox" style="position:relative; z-index: 3; color: white"><span style='color:#FFFFFF'>Mic Input</span></input>
       </div>
       <!-- Vocoder button -->
       <div class="row">
