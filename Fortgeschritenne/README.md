@@ -192,11 +192,11 @@ y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
 
 to continue...
 
-## Current state
-I am able to do the overlap and add without artifacts. This works with frames with an even number of blocks.
-
-Next step is to extract the residual signal.
-
-Refactoring is needed!!
+## Next state
+Pitch prediction
+Quantization K's
+Microphone
+Visualization k's
+Voice transofrmation
 
 
