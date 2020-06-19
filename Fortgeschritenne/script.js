@@ -95,35 +95,27 @@ startDemo = () => {
   playButton.onclick = () => {
     disconnect_all();
 
-    if (playing) {
+
+
+    if (!playing) {
       // check if context is in suspended state (autoplay policy)
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
+
       soundSource = audioCtx.createBufferSource();
       soundSource.buffer = soundBuffer[selectAudioList.value];
-
-
-      // Vocoder destination
-      if (!vocoderButton.checked){
-        soundSource.connect(audioCtx.destination);
-        // Anayser
-        soundSource.connect(analyser);
-      } else {
-        soundSource.connect(vocoderNode).connect(audioCtx.destination);
-        // Anayser
-        soundSource.connect(vocoderNode).connect(analyser);
-      }
+      connect_source();
 
       soundSource.start();
+      console.log('start');
       playing = true;
-      playButton.innerText = 'Pause sound';
+      playButton.innerText = 'Pause Sound';
     } else {
-      try {
-	soundSource.stop();
-      } catch {console.log('could not stop file input soundSource')};
+      soundSource.stop();
+      console.log('stop')
       playing = false;
-      playButton.innerText = 'Play sound';
+      playButton.innerText = 'Play Sound';
     }
   }
 
@@ -139,35 +131,15 @@ startDemo = () => {
       // hide list of audio
       selSoundContainer.style.visibility = 'hidden';
 
-      // Vocoder destination
-      if (!vocoderButton.checked){
-	streamSource.connect(audioCtx.destination);
-	// Anayser
-	streamSource.connect(analyser);
-      } else {
-	streamSource.connect(vocoderNode).connect(audioCtx.destination);
-	// Anayser
-	streamSource.connect(vocoderNode).connect(analyser);
-      }
+      connect_source();
 
     } else {
 
       // show list of audio
       selSoundContainer.style.visibility = 'visible';
-
-      soundSource = audioCtx.createBufferSource();
       soundSource.buffer = soundBuffer[selectAudioList.value];
 
-      // Vocoder destination
-      if (!vocoderButton.checked){
-        soundSource.connect(audioCtx.destination);
-        // Anayser
-        soundSource.connect(analyser);
-      } else {
-        soundSource.connect(vocoderNode).connect(audioCtx.destination);
-        // Anayser
-        soundSource.connect(vocoderNode).connect(analyser);
-      }
+      connect_source();
 
     }
   }
