@@ -34,6 +34,7 @@ startDemo = () => {
         pBlock = e.data.pairBlock;
         oBlock = e.data.oddBlock;
         lpcCoeff = e.data.lpcCoeff;
+        kCoeff = e.data.kCoeff;
 	      blockRMS = e.data.blockRMS;
       } 
       // Get information every second
@@ -230,6 +231,25 @@ startDemo = () => {
         canvasCtx.translate(wposW,wposH);
         paintWave(lpcCoeff);
         paintWave(lpcCoeff);
+        canvasCtx.translate(-wposW,-wposH);
+      }
+
+      // Plot tube areas from speech (wakita)
+      //https://www.ece.ucsb.edu/Faculty/Rabiner/ece259/digital%20speech%20processing%20course/lectures_new/Lecture%2014_winter_2012.pdf
+      if (kCoeff !== null){
+        // Pre-emphasis?
+        // Calculate A
+        let a = [1];
+        canvasCtx.fillStyle = "white";
+
+        wposW = canvas.width/3;
+        wposH = canvas.height/3;
+        canvasCtx.translate(wposW,wposH);
+        for (let i = 1; i<kCoeff.length; i++){
+          a[i] = a[i-1]*(1-kCoeff[i-1])/(1+kCoeff[i-1]);
+          canvasCtx.fillRect(0, i*20, 20, a[i-1]*20)
+        }
+        canvasCtx.fillRect(0, (i+1)*20, 20, a[i]*20);
         canvasCtx.translate(-wposW,-wposH);
       }
 
