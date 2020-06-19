@@ -135,18 +135,20 @@ startDemo = () => {
 
       // show list of audio
       selSoundContainer.style.visibility = 'visible';
-      soundSource.buffer = soundBuffer[selectAudioList.value];
+      //soundSource.buffer = soundBuffer[selectAudioList.value];
 
     }
-
       if (playing){
 	connect_source();
       }
   }
 
+
   vocoderButton.onclick = () => {
     disconnect_all();
-    connect_source();
+    if (playing){
+      connect_source();
+    }
   }
 
   function connect_streamSource(){
