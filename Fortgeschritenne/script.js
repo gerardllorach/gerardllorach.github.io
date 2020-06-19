@@ -1,5 +1,5 @@
 // The main global scope
-console.log("v0.19");
+console.log("v0.20");
 
 
 startDemo = () => {
@@ -247,9 +247,9 @@ startDemo = () => {
         canvasCtx.translate(wposW,wposH);
         for (let i = 1; i<kCoeff.length; i++){
           a[i] = a[i-1]*(1-kCoeff[i-1])/(1+kCoeff[i-1]);
-          canvasCtx.fillRect(0, i*20, 20, a[i-1]*20)
+          canvasCtx.fillRect(i*20, 0, 20, a[i-1]*20)
         }
-        canvasCtx.fillRect(0, (i+1)*20, 20, a[i]*20);
+        canvasCtx.fillRect((kCoeff.length)*20,0 , 20, a[kCoeff.length-1]*20);
         canvasCtx.translate(-wposW,-wposH);
       }
 
