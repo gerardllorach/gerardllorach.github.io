@@ -51,7 +51,7 @@ class Vocoder extends AudioWorkletProcessor {
     this._oddSynthBuffer = new Float32Array(this._frameSize);
     this._pairSynthBuffer = new Float32Array(this._frameSize);
 
-    console.log("Frame size: " + this._frameSize + 
+    console.log("Frame size: " + this._frameSize +
           ". Set frame length: " + this._frameSize/sampleRate + " seconds" +
           ". Desired frame length: " + frameDuration + " seconds" +
           ". Blocks per frame: " + this._numBlocksInFrame +
@@ -74,23 +74,15 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Synthesis
     // Create impulse signal
-    // TODO: give more variability
     this._impulseSignal = new Float32Array(this._frameSize);
-    this._pulseOffset = 0;
-    //let numPulses = 8;
-    //for (let i = 0; i<numPulses; i++){
-    //  this._impulseSignal[i*1024/numPulses] = 1;
-    //}
-
-    // normalize impulse signal to RMS of 1
-    //this._impulseSignalRMS = this.blockRMS(this._impulseSignal); // this could be circumvented since here the RMS is sqrt(framesize/numPulses), but wont hold for other excitation
-    //for (let i = 0; i<1024; i++){
-    //  this._impulseSignal[i] = this._impulseSignal[i] / this._impulseSignalRMS;
-    //}
 
     // autocorrelation indices for fundamental frequency estimation
     this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
     this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
+
+    // buffer for fundamental period estimation
+    this._fundPeriodLen = this._upperACFBound - this._lowerACFBound;
+    this._fundPeriodBuffer = []; // new Float32Array(this.fundPeriodLen);
 
 
 
@@ -215,11 +207,12 @@ class Vocoder extends AudioWorkletProcessor {
 
     let errorBuffer = new Float32Array(this._frameSize)
     // compute error signal and its RMS
+    let in_idx = 0;
 
     // Iterate for each sample. O(fSize*M)
     for (let i = 0; i< inBuffer.length; i++){
       for (let j = 0; j<M+1; j++){
-	let in_idx = i + j; // i don't really know what should happen in this case, add zeros?
+	in_idx = i + j; // i don't really know what should happen in this case, add zeros?
 	  if (in_idx >= inBuffer.length){
 	    in_idx -= inBuffer.length;
 	  }
@@ -259,17 +252,19 @@ class Vocoder extends AudioWorkletProcessor {
 
   autocorrPeriod(inBuffer) {
 
-    let phi = [];
-    for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
-      phi[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
+    for (let i=0; i<this._fundPeriodLen; i++) {
+      this._fundPeriodBuffer[i] = 0;
     }
-      // partially stolen from https://stackoverflow.com/questions/11301438/return-index-of-greatest-value-in-an-array
-      let maxIdx = this._lowerACFBound + phi.indexOf(Math.max(...phi)); // apparently '...' is a JS spread operator, like '*list' in python
 
-    //let fundFreq = sampleRate / maxIdx;
+    for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
+      this._fundPeriodBuffer[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
+    }
+    // partially stolen from https://stackoverflow.com/questions/11301438/return-index-of-greatest-value-in-an-array
+    let maxIdx = this._lowerACFBound + this._fundPeriodBuffer.indexOf(Math.max(...this._fundPeriodBuffer));
 
     return maxIdx;
   }
+
 
   blockRMS(inBuffer) {
     let squaredSum = 0;
@@ -463,7 +458,7 @@ class Vocoder extends AudioWorkletProcessor {
       const outputChannel = output[channel];
       //for (let i = 0; i < inputChannel.length; ++i){
         // Distortion
-        //outputChannel[i] = inputChannel[i];//Math.max(-1, Math.min(1,inputChannel[i]*5)) ; // Amplify and clamp       
+        //outputChannel[i] = inputChannel[i];//Math.max(-1, Math.min(1,inputChannel[i]*5)) ; // Amplify and clamp
       //}
 
       // Process block
