@@ -14,6 +14,8 @@ class Vocoder extends AudioWorkletProcessor {
     super();
     // Initialize parameters
     this.init(0.02);
+    // Process message
+    this.port.onmessage = this.handleMessage_.bind(this);
   }
 
   // input: Frame duration in seconds
@@ -65,6 +67,10 @@ class Vocoder extends AudioWorkletProcessor {
     this._kCoeff = [];
     // Filter samples
     this._prevY = [];
+    // Quantization
+    this._quantOpt = false;
+    this._quantBits = 2;
+
 
     // Synthesis
     // Create impulse signal
@@ -97,6 +103,15 @@ class Vocoder extends AudioWorkletProcessor {
     this._block2 = new Float32Array(128);
 
   }
+
+
+  handleMessage_(e){
+    if (e.data.id == "quantization"){
+      this._quantOpt = e.data.quantOpt;
+      this._quantBits = e.data.quantBits;
+    }
+  }
+
 
 
   createTonalExcitation(periodSamples, errorRMS){
@@ -185,8 +200,15 @@ class Vocoder extends AudioWorkletProcessor {
 
     let M = 12;
 
-
+    // Getting the a coefficients and k coefficients
+    // The a coefficients are used for the filter
     this._lpcCoeff = this.LPCcoeff(inBuffer, M);
+
+    // Quantazie LPC coefficients if selected
+    if (this._quantOpt)
+      this._lpcCoeff = this.quantizeLPC(this._lpcCoeff, this._kCoeff, this._quantBits);
+    
+
     let periodSamples = this.autocorrPeriod(inBuffer);
     this._fundFreq = sampleRate / periodSamples;
 
@@ -213,7 +235,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Filter
     // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
     //y[n] = x[n] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
-    let y_prev = this._prevY;// As many zeros as M; //
+    let y_prev = this._prevY;// As many zeros as M;
     for (let i=0; i< M; i++){
       y_prev[i] = 0;
     }
@@ -232,6 +254,8 @@ class Vocoder extends AudioWorkletProcessor {
     return outBuffer;
 
   }
+
+
 
   autocorrPeriod(inBuffer) {
 
@@ -267,13 +291,17 @@ class Vocoder extends AudioWorkletProcessor {
     // Levinson's method
     //let M = 12;
     // Autocorrelation values
-    let phi = [];
+    let phi = []; // Garbage collector
     for (let i = 0; i<M+1; i++){
       phi[i] = this.autoCorr(inBuffer, i);
     }
 
     // M = 1
     let a1_m = -phi[1] / phi[0];
+
+    this._kCoeff[0] = a1_m;
+
+
     // Iterate to calculate coefficients
     let coeff = [1, a1_m];
     let tempCoeff = [1, a1_m];
@@ -290,7 +318,8 @@ class Vocoder extends AudioWorkletProcessor {
             alpha += coeff[i]*phi[i];
         }
         k = - mu / alpha;
-        this._kCoeff[m] = k;
+
+        this._kCoeff[m+1] = k;
         // Calculate new coefficients
         coeff[m+2] = 0;
         for (let i = 1; i<m+3; i++){
@@ -302,6 +331,45 @@ class Vocoder extends AudioWorkletProcessor {
     return coeff;
   }
 
+
+  // Quantize K coeficients
+  // TODO: it gives the same result as matlab, but there are errors at lower bit rates??
+  quantizeLPC(lpcCoeff, kCoeff, numBits){
+    let M = lpcCoeff.length-1;
+    // Quantize Ks
+    for (let i = 0; i< M; i++){
+      kCoeff[i] = this.quantizeK(kCoeff[i], numBits);
+    }
+    // recalculate LPC
+    return this.recalculateLPC(lpcCoeff, kCoeff);
+
+  }
+
+  recalculateLPC(lpcCoeff, kCoeff){
+    let M = lpcCoeff.length-1;
+    // Recalulate coefficients
+    let qLpcCoeff = [1]; // Garbage collector
+    for (let m = 0; m < M; m++){
+      lpcCoeff[m+1] = 0;
+      for (let i = 1; i<m+2; i++){
+        qLpcCoeff[i] = lpcCoeff[i] + kCoeff[m]*lpcCoeff[m+1-i];
+      }
+      lpcCoeff = qLpcCoeff.slice();
+    }
+    return lpcCoeff;
+  }
+
+
+
+  // Quantize K's
+  quantizeK(k, numBits){
+    let steps = Math.pow(2, numBits)-1; // e.g. 4 steps -1 to 1 --> 0 -- 1 * 3
+    let qK = ((k+1)/2)*steps; // Transform to range 0 to (2^bits -1) e.g. 0 -- 3
+    qK = Math.round(qK)/steps; // Quantize and scale down (range 0 to 1) e.g. (0 1 2 3 )/3 = 0 to 1
+    qK = qK*2 - 1; // Transform to range -1 to 1
+    
+    return qK;
+  }
 
   // Autocorrelation function
   autoCorr(buffer, delay){
@@ -444,6 +512,8 @@ class Vocoder extends AudioWorkletProcessor {
 
     return true;
   }
+
+
 }
 
 registerProcessor('vocoder', Vocoder);

@@ -67,6 +67,9 @@ startDemo = () => {
   // DOM elements
   const playButton = document.getElementById("playButton");
   const vocoderButton = document.getElementById("vocoderButton");
+  const quantButton = document.getElementById("quantButton");
+  const quantSlider = document.getElementById("quantSlider");
+  const quantInfo = document.getElementById("quantInfo");
   const selSoundContainer = document.getElementById("selSoundContainer");
   const selectAudioList = document.getElementById("selectAudio");
   const canvas = document.getElementById("myCanvas");
@@ -124,6 +127,8 @@ startDemo = () => {
         soundSource.connect(vocoderNode).connect(audioCtx.destination);
         soundSource.connect(vocoderNode).connect(analyser);
       }
+      // Unhide vocoder HTML elements
+      quantButton.parentElement.hidden = false;
     } else {
       if (playing) {
         vocoderNode.disconnect();
@@ -131,7 +136,30 @@ startDemo = () => {
         soundSource.connect(audioCtx.destination);
         soundSource.connect(analyser);
       }
+      // Unhide vocoder HTML elements
+      quantButton.parentElement.hidden = true;
     }
+  }
+
+  // Quantization on/off
+  quantButton.onclick = () => {
+    // Send quantization on/off
+    vocoderNode.port.postMessage({
+      id: "quantization",
+      quantOpt: quantButton.checked,
+      quantBits: quantSlider.value,
+    })
+  }
+  // Quantization slider
+  quantSlider.oninput = () => {
+    // Send quantization bits to AudioWorklet
+    vocoderNode.port.postMessage({
+      id: "quantization",
+      quantOpt: quantButton.checked,
+      quantBits: quantSlider.value,
+    })
+    // Show value
+    quantInfo.innerHTML = quantSlider.value + " bits";
   }
 
 
@@ -139,6 +167,11 @@ startDemo = () => {
 
 
 
+
+
+
+
+  // Visualization
   function paintWave(inBuffer){
 
     // Scale of wave
@@ -234,22 +267,27 @@ startDemo = () => {
         canvasCtx.translate(-wposW,-wposH);
       }
 
-      // Plot tube areas from speech (wakita)
+      // Plot tube areas from speech (wakita), page 63
       //https://www.ece.ucsb.edu/Faculty/Rabiner/ece259/digital%20speech%20processing%20course/lectures_new/Lecture%2014_winter_2012.pdf
       if (kCoeff !== null){
-        // Pre-emphasis?
+        // Pre-emphasis is missing?
         // Calculate A
         let a = [1];
         canvasCtx.fillStyle = "white";
 
-        wposW = canvas.width/3;
+        wposW = canvas.width/4;
         wposH = canvas.height/3;
         canvasCtx.translate(wposW,wposH);
+        // Calculate a
         for (let i = 1; i<kCoeff.length; i++){
           a[i] = a[i-1]*(1-kCoeff[i-1])/(1+kCoeff[i-1]);
-          canvasCtx.fillRect(i*20, 0, 20, a[i-1]*20)
         }
-        canvasCtx.fillRect((kCoeff.length)*20,0 , 20, a[kCoeff.length-1]*20);
+        // Paint a
+        let normValue = Math.max(...a);
+        for (let i = 0; i<kCoeff.length; i++){
+          let value = 50*a[i]/normValue;
+          canvasCtx.fillRect(i*20, -value/2, 20, value);
+        }
         canvasCtx.translate(-wposW,-wposH);
       }
 

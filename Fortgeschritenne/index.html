@@ -76,6 +76,11 @@ DONE:
       <div class="row">
         <input id="vocoderButton" type="checkbox" style="position:relative; z-index: 3; color: white"> <span style='color:#FFFFFF'>Vocoder ON/OFF </span></input>
       </div>
+      <div class="row" hidden>
+        <input id="quantButton" type="checkbox" style="position:relative; z-index: 3; color: white"> <span style='color:#FFFFFF'>K's quantization ON/OFF </span></input>
+        <input id="quantSlider" type="range" min="2" max="8" value="3" style="color:white;position:relative; z-index: 3;">
+        <p id="quantInfo" style="color: white"></p>
+      </div>
       <!-- Audio list -->
       <div class="row">
         <div id="selSoundContainer" class="form-group">
