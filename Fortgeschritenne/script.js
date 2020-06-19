@@ -98,8 +98,6 @@ startDemo = () => {
   playButton.onclick = () => {
     disconnect_all();
 
-
-
     if (!playing) {
       // check if context is in suspended state (autoplay policy)
       if (audioCtx.state === 'suspended') {
@@ -127,39 +125,38 @@ startDemo = () => {
 
   // Switch microphone/file input
   inputButton.onclick = () => {
+
     disconnect_all();
 
     if (inputButton.checked) {
-
       // hide list of audio
       selSoundContainer.style.visibility = 'hidden';
 
     } else {
-
       // show list of audio
       selSoundContainer.style.visibility = 'visible';
       //soundSource.buffer = soundBuffer[selectAudioList.value];
-
     }
-      if (playing){
-	connect_source();
-      }
+    if (playing){
+      connect_source();
+    }
 
   }
 
 
   vocoderButton.onclick = () => {
-    disconnect_all();
-    if (playing){
-      connect_source();
-    }
-    // Show hide HTML vocoder options
+    // Show/Hide HTML vocoder options
     if (vocoderButton.checked){
     	// Unhide vocoder HTML elements
     	quantButton.parentElement.hidden = false;
-	} else {
-		// Hide vocoder HTML elements
+    } else {
+		  // Hide vocoder HTML elements
 	  	quantButton.parentElement.hidden = true;
+    }
+    // Create audio connections
+    disconnect_all();
+    if (playing){
+      connect_source();
     }
   }
 
