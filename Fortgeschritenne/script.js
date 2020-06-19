@@ -131,17 +131,17 @@ startDemo = () => {
       // hide list of audio
       selSoundContainer.style.visibility = 'hidden';
 
-      connect_source();
-
     } else {
 
       // show list of audio
       selSoundContainer.style.visibility = 'visible';
       soundSource.buffer = soundBuffer[selectAudioList.value];
 
-      connect_source();
-
     }
+
+      if (playing){
+	connect_source();
+      }
   }
 
   vocoderButton.onclick = () => {
