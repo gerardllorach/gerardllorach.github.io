@@ -218,6 +218,7 @@ for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
 this._pulseOffset = lastIndex + periodSamples - this._frameSize;
 ```
 The offset from the last pulse is saved in order to prevent inconsistencies inbetween block transitions, which could potentially result in clicks. Not shown is the normalization to the same RMS value per block as the error signal, so that the resulting synthesis signals has approximately the same energy per block as the original signal.
+This approach is very useful in terms of processing time required, as only a part of the autocorrelation values are used within the peak search; also, within the linear prediction routine the autocorrelation is computed already. The high efficiency comes with a disadvantage however: Since it is limited to maxima of the sample-wise autocorrelation, there will a higher precision for lower frequencies (larger fundamental periods) than for high fundamental frequencies (short periods) as the grid on which the fundamental period is searched is related to the potential fundamental frequencies by inversion.
 
 ### Real-time microphone input
 Within the web audio API, it is possible to also record and process audio signals from the user microphone. For this, the user can be asked whether or not they want to share their input via the following snippet:
