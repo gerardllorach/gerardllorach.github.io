@@ -195,27 +195,43 @@ In order to model tonal excitation of the vocal tract, an estimate of the fundam
 
 An efficient way to estimate the fundamental frequency of speech is the autocorrelation method. For a periodic signal, its autocorrelation will display the same periodicity as the signal at the autocorrelation shift in samples corresponding to the period of the signal. Since for human speech, the fundamental frequency is in most cases within the range of 70 to 200 Hz, the range in which an autocorrelation peak is searched for can be limited to the range of equivalent shifts. They are computed by the following code:
 ```javascript
-    // autocorrelation indices for fundamental frequency estimation
-    this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
-    this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
+// 200 Hz upper frequency limit -> lower limit for periodicity in samples
+this._lowerACFBound = Math.floor(sampleRate / 200);
+
+// 70 Hz lower frequency limit -> upper limit
+this._upperACFBound = Math.ceil(sampleRate / 70); 
 ```
 As can be seen, the autocorrelation shifts are the inverse of the corresponding periods, and scaled to the sampling rate used in the processing scheme. Based on these boundaries we can search for the maximum of the frame-wise autocorrelation:
 ```javascript
-    for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
-      this._fundPeriodBuffer[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
-    }
-    let maxIdx = this._lowerACFBound + this._fundPeriodBuffer.indexOf(Math.max(...this._fundPeriodBuffer));
+for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
+  this._fundPeriodBuffer[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
+}
+let maxIdx = this._lowerACFBound + this._fundPeriodBuffer.indexOf(Math.max(...this._fundPeriodBuffer));
 ```
 Note that only the relevant values of the autocorrelation function need to be computed. In javascript, the `...` denotes the spread operator. This operation is necessary because the `Math.max()` function does not generalize to array type variables as well as in higher-level languages such as Matlab or Python, which natively support array operations. The expression `Math.max(...acfBuff)` is then equivalent to `Math.max(acfBuff[0], acfBuff[1], acfBuff[2] /*and so on*/)`. 
 
 The tonal excitation is then generated based on the resulting period `periodSamples` for a single frame as follows:
 ```javascript
-    for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
-	this._impulseSignal[i] = 1;
-    }
+for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
+  this._impulseSignal[i] = 1;
+}
 this._pulseOffset = lastIndex + periodSamples - this._frameSize;
 ```
 The offset from the last pulse is saved in order to prevent inconsistencies inbetween block transitions, which could potentially result in clicks. Not shown is the normalization to the same RMS value per block as the error signal, so that the resulting synthesis signals has approximately the same energy per block as the original signal.
+
+### Real-time microphone input
+Within the web audio API, it is possible to also record and process audio signals from the user microphone. For this, the user can be asked whether or not they want to share their input via the following snippet:
+```javascript
+navigator.mediaDevices.getUserMedia({audio: true})
+  .then(function(stream) {
+    streamSource = audioCtx.createMediaStreamSource(stream);
+  });
+```
+This step will create an AudioWorklet similar to the one required for file-wise processing. Since the framework is very modular, individual processing blocks can easily be connected, e.g. by connecting the audio source to the vocoder node and then to the output: 
+```javascript
+  streamSource.connect(vocoderNode).connect(audioCtx.destination);
+```
+Since a lot of interface options have the potential to interfere with each other, a change in the processing scheme is accompanied by a re-connection of all processing nodes, and depending on the user interface states the appropriate AudioWorklets are selected and set to the appropriate state. As an example, if the microphone input is activated via checking a box, the file selection dropdown menu for audio file input will be hidden until the input is changed again.
 
 to continue...
 
