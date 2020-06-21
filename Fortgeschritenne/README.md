@@ -190,10 +190,37 @@ where "y[n]" is the filtered signal, "x[n]" is the input signal, "b" are the fee
 y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
 ```
 
+### Estimation of the fundamental frequency
+In order to model tonal excitation of the vocal tract, an estimate of the fundamental frequency is required. For a fixed excitation period, the pulse-train excited synthesized signal sound very monotonous. Therefore, it leads to a qualitative improvement when for each block the fundamental frequency is estimated and the pulse-train signal is generated accordingly. This will be true mainly for tonal/voiced speech components.
+
+An efficient way to estimate the fundamental frequency of speech is the autocorrelation method. For a periodic signal, its autocorrelation will display the same periodicity as the signal at the autocorrelation shift in samples corresponding to the period of the signal. Since for human speech, the fundamental frequency is in most cases within the range of 70 to 200 Hz, the range in which an autocorrelation peak is searched for can be limited to the range of equivalent shifts. They are computed by the following code:
+```javascript
+    // autocorrelation indices for fundamental frequency estimation
+    this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
+    this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
+```
+As can be seen, the autocorrelation shifts are the inverse of the corresponding periods, and scaled to the sampling rate used in the processing scheme. Based on these boundaries we can search for the maximum of the frame-wise autocorrelation:
+```javascript
+    for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
+      this._fundPeriodBuffer[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
+    }
+    let maxIdx = this._lowerACFBound + this._fundPeriodBuffer.indexOf(Math.max(...this._fundPeriodBuffer));
+```
+Note that only the relevant values of the autocorrelation function need to be computed. In javascript, the `...` denotes the spread operator. This operation is necessary because the `Math.max()` function does not generalize to array type variables as well as in higher-level languages such as Matlab or Python, which natively support array operations. The expression `Math.max(...acfBuff)` is then equivalent to `Math.max(acfBuff[0], acfBuff[1], acfBuff[2] /*and so on*/)`. 
+
+The tonal excitation is then generated based on the resulting period `periodSamples` for a single frame as follows:
+```javascript
+    for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
+	this._impulseSignal[i] = 1;
+    }
+this._pulseOffset = lastIndex + periodSamples - this._frameSize;
+```
+The offset from the last pulse is saved in order to prevent inconsistencies inbetween block transitions, which could potentially result in clicks. Not shown is the normalization to the same RMS value per block as the error signal, so that the resulting synthesis signals has approximately the same energy per block as the original signal.
+
 to continue...
 
 ## Next state
-Pitch prediction
+
 Quantization K's
 Microphone
 Visualization k's
