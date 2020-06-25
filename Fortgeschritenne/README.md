@@ -12,22 +12,22 @@ Sadly, there are not many demos working with the AudioWorklet (at least I could 
 One of the requirements of the AudioWorklet is that the website has to be provided by an HTTPS server. Initially I created a nodejs server with self-signed certificates to run locally. But I later discovered that github provides HTTPS out of the box and thus switched to this platform to develop the application. Another requirement for the AudioWorklet is that the code has to be written in a different .js file, which is loaded from the main javascript thread.
 
 ## Chapters
-[Chapter 1. Overlap and add](docs/Chapter 1. Overlap and add.md)
+#### [Chapter 1. Overlap and add](docs/Chapter%201.%20Overlap%20and%20add.md)
 Audio blocks, buffers and frames with the Web Audio API.
 
-[Chapter 2. LPC coefficients](docs/Chapter 2. LPC coefficients.md)
+#### [Chapter 2. LPC coefficients](docs/Chapter%202.%20LPC%20coefficients.md)
 The LPC coefficients and the Levinson algorithm.
 
-[Chapter 3. Voice synthesis](docs/Chapter 3. Voice synthesis.md)
+#### [Chapter 3. Voice synthesis](docs/Chapter%203.%20Voice%20synthesis.md)
 Excitation signals, signal energy, pitch detection and filtering.
 
-[Chapter 4. Voice transformations](docs/Chapter 4. Voice transformations.md)
+#### [Chapter 4. Voice transformations](docs/Chapter%204.%20Voice%20transformations.md)
 Quantization of lattice coefficients (k) and reversal of lattice coefficients.
 
-[Chapter 5. Web interface](docs/Chapter 5. Web interface.md)
+#### [Chapter 5. Web interface](docs/Chapter%205.%20Web%20interface.md)
 Canvas HTML, microphone input, drag and drop of audio files.
 
-Chapter 6. Visualization
+#### Chapter 6. Visualization
 Yet to do
 
 
