@@ -2,7 +2,7 @@
 The front end contains very simple elements. A canvas (to plot signals); a button to play and pause the audio; a button to activate and deactivate the AudioWorklet processing; several voice transformation options and a select list to choose from different audio signals.
 
 ### Canvas
-In the canvas I plot can plot the frames, blocks and buffers used in the AudioWorklet in real-time. For most signals, this is not very helpful as each frame will have a different shape and I won't be able to see anything in real-time. But for testing purposes, I created a sawtooth wave, where every "tooth" has the size of an AudioWorklet frame, e.g., from 0 to 1 every 1024 samples and so on. With this signal, the frames always have the same shape at every iteration and the wave plot in the canvas is stable. Bear in mind that the sample rate of this signal has to be the same as the Web Audio API, in my case 48 kHz. A sawtooth wave with the size of a block (128 samples) was also used for testing the block size.
+In the canvas we plot can plot the frames, blocks and buffers used in the AudioWorklet in real-time. For most signals, this is not very helpful as each frame will have a different shape and we won't be able to see anything in real-time. But for testing purposes, we created a sawtooth wave, where every "tooth" has the size of an AudioWorklet frame, e.g., from 0 to 1 every 1024 samples and so on. With this signal, the frames always have the same shape at every iteration and the wave plot in the canvas is stable. Bear in mind that the sample rate of this signal has to be the same as the Web Audio API. A sawtooth wave with the size of a block (128 samples) was also used for testing the block size.
 
 ```
 Sawtooth wave for a frame size of 1024
