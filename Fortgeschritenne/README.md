@@ -33,6 +33,6 @@ Yet to do
 
 
 ## Todo list
-Quantization K's, artifacts appear
-Synthesis with white noise
-Voice transofrmations
+* Quantization K's done but artifacts appear
+* Synthesis with white noise
+* Other Voice transofrmations
