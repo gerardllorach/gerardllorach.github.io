@@ -1,4 +1,4 @@
-### LPC coefficients
+## Chapter 2. LPC coefficients
 We implemented the LPC algorithm using the Levinson approach. It is described here: "Dutoit, T., 2004, May. Unusual teaching short-cuts to the Levinson and lattice algorithms. In 2004 IEEE International Conference on Acoustics, Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE."
 
 For the algorithm, first we calculate the autocorrelation of the frame. We only need the autocorrelation values up to the size of the LPC coefficients (M). We used M=12 by default.
