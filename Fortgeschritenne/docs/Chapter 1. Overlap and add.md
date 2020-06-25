@@ -83,3 +83,7 @@ oddSynthBuffer       X O O O
 ...
 
 ```
+
+### Frame rate and blocks
+Vocoder and other speech transformations might work better with a lower sampling frequency, preferably between 8kHz and 16kHz. By default, the sampling frequency of my browser is 48 kHz. But in Chrome, one can specify the sampling frequency of the AudioContext. Nevertheless, if the sampling rate is very low the app can run into problems. It can be that one frame equals to one block. Because we are working with blocks to create frames, in this particular case, there will be no "overlap and add" and some clicks might appear between frames. One possible solution would be to force a minimum of two blocks per frame. The other would be to work on a sample level, which would lead to more delay.
+
