@@ -1,4 +1,4 @@
-## Web interface
+## Chapter 5. Web interface
 The front end contains very simple elements. A canvas (to plot signals); a button to play and pause the audio; a button to activate and deactivate the AudioWorklet processing; several voice transformation options and a select list to choose from different audio signals.
 
 ### Canvas
