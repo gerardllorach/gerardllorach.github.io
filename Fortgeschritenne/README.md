@@ -4,8 +4,8 @@
 
 
 ## Chapters
-#### [Introduction to the Web Audio API] (docs/Introduction.md)
-An introduction to the Web Audio API and AudioWorklets
+#### [Introduction to the Web Audio API](docs/Introduction.md)
+An introduction to the Web Audio API and AudioWorklets.
 
 #### [Chapter 1. Overlap and add](docs/Chapter%201.%20Overlap%20and%20add.md)
 Audio blocks, buffers and frames with the Web Audio API.
@@ -30,5 +30,3 @@ Yet to do
 Quantization K's, artifacts appear
 Synthesis with white noise
 Voice transofrmations
-
-
