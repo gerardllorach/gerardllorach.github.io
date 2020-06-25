@@ -1,4 +1,4 @@
-## Voice synthesis
+## Chapter 3. Voice synthesis
 
 ### Estimation of the fundamental frequency
 In order to model tonal excitation of the vocal tract, an estimate of the fundamental frequency is required. For a fixed excitation period, the pulse-train excited synthesized signal sound very monotonous. Therefore, it leads to a qualitative improvement when for each block the fundamental frequency is estimated and the pulse-train signal is generated accordingly. This will be true mainly for tonal/voiced speech components.
@@ -29,6 +29,9 @@ this._pulseOffset = lastIndex + periodSamples - this._frameSize;
 ```
 The offset from the last pulse is saved in order to prevent inconsistencies inbetween block transitions, which could potentially result in clicks. Not shown is the normalization to the same RMS value per block as the error signal, so that the resulting synthesis signals has approximately the same energy per block as the original signal.
 This approach is very useful in terms of processing time required, as only a part of the autocorrelation values are used within the peak search; also, within the linear prediction routine the autocorrelation is computed already. The high efficiency comes with a disadvantage however: Since it is limited to maxima of the sample-wise autocorrelation, there will a higher precision for lower frequencies (larger fundamental periods) than for high fundamental frequencies (short periods) as the grid on which the fundamental period is searched is related to the potential fundamental frequencies by inversion.
+
+### Voiced and unvoiced detection
+TODO
 
 ### Using the LPC coefficients to filter an excitation signal
 A voiced signal can be synthesized by filtering an impulse signal and the LPC coefficients, based on the vocal tract model. The impulse signal defines the pitch and can look like this: 1, -1, 0, 0, 0, ... , 0, 0, 1, -1, 0, 0, 0... 
