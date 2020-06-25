@@ -1,4 +1,4 @@
-## Chapter 3. Voice transformations
+## Chapter 4. Voice transformations
 
 ### Manipulating the K's (lattice parameters)
 When computing the LPC coefficients (aka the filter parameters), we obtain the K coefficients, also known as PARCOR coefficients. This array of k's is sufficient to recompute the LPC coefficients. We can do several modifications on the K coefficients and then recompute the modified LPC parameters, which will create some voice transformations when filtering the excitation signal.
