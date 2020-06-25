@@ -7,6 +7,8 @@ This repository contains the project for the subject "Fortgeschrittenen-Projektp
 ## Live demo
 https://gerardllorach.github.io/Fortgeschritenne/
 
+Hint: Drag and drop audio files (.wav and .mp3) at the bottom of the webpage to test it with your own files!
+
 ## Chapters
 #### [Introduction to the Web Audio API](docs/Introduction.md)
 An introduction to the Web Audio API and AudioWorklets.
