@@ -80,6 +80,7 @@ startDemo = () => {
   const vocoderButton = document.getElementById("vocoderButton");
   const quantButton = document.getElementById("quantButton");
   const quantSlider = document.getElementById("quantSlider");
+  const reverseKButton = document.getElementById("reverseKButton");
   const quantInfo = document.getElementById("quantInfo");
   const selSoundContainer = document.getElementById("selSoundContainer");
   const selectAudioList = document.getElementById("selectAudio");
@@ -149,9 +150,11 @@ startDemo = () => {
     if (vocoderButton.checked){
     	// Unhide vocoder HTML elements
     	quantButton.parentElement.hidden = false;
+    	reverseKButton.parentElement.hidden = false;
     } else {
 		  // Hide vocoder HTML elements
 	  	quantButton.parentElement.hidden = true;
+	  	reverseKButton.parentElement.hidden = true;
     }
     // Create audio connections
     disconnect_all();
@@ -180,6 +183,14 @@ startDemo = () => {
     })
     // Show value
     quantInfo.innerHTML = quantSlider.value + " bits";
+  }
+  // Reverse k's on/off
+  reverseKButton.onclick = () => {
+    // Send quantization on/off
+    vocoderNode.port.postMessage({
+      id: "reverseK",
+      reverseKOpt: reverseKButton.checked,
+    })
   }
 
 
