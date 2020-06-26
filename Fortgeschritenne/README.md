@@ -33,6 +33,6 @@ Yet to do
 
 
 ## Todo list
-* Quantization K's done but artifacts appear
 * Synthesis with white noise
+* Vocal tract lengthening?
 * Other Voice transofrmations
