@@ -33,6 +33,7 @@ Yet to do
 
 
 ## Todo list
-* Synthesis with white noise
-* Vocal tract lengthening?
-* Other Voice transofrmations
+* Synthesis with white noise (done, threshold voice/unvoiced to be done) - Gerard
+* Slider for threshold voice/unvoiced - Gerard
+* Vocal tract lengthening - Mattes (sampling/resampling frames)
+* Check modular audioworklet, separate js files?

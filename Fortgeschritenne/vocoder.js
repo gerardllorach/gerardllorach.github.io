@@ -84,7 +84,8 @@ class Vocoder extends AudioWorkletProcessor {
 
     // excitation variables
     this._tonalConfidence = 0;
-    this._confidenceTonalThreshold = 0.9;
+    this._confidenceTonalThreshold = 0.1;
+    this._periodFactor = 1;
 
     // buffer for fundamental period estimation
     this._fundPeriodLen = this._upperACFBound - this._lowerACFBound;
@@ -262,7 +263,9 @@ class Vocoder extends AudioWorkletProcessor {
 
     this._rms = this.blockRMS(errorBuffer);
 
-    let periodSamples = this.autocorrPeriod(inBuffer);
+    // longer vocal tract -> less fundamental period
+    let periodSamples = Math.round(this._periodFactor * this.autocorrPeriod(inBuffer));
+
     this._fundFreq = sampleRate / periodSamples;
 
 
