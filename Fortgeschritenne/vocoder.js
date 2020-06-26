@@ -70,6 +70,8 @@ class Vocoder extends AudioWorkletProcessor {
     // Quantization
     this._quantOpt = false;
     this._quantBits = 2;
+    // Reverse K's
+    this._reverseKOpt = false;
 
 
     // Synthesis
@@ -101,13 +103,15 @@ class Vocoder extends AudioWorkletProcessor {
   }
 
 
+  // Receive messages from main thread
   handleMessage_(e){
     if (e.data.id == "quantization"){
       this._quantOpt = e.data.quantOpt;
       this._quantBits = e.data.quantBits;
+    } else if (e.data.id = "reverseK"){
+      this._reverseKOpt = e.data.reverseKOpt;
     }
   }
-
 
 
   createTonalExcitation(periodSamples, errorRMS){
@@ -233,6 +237,11 @@ class Vocoder extends AudioWorkletProcessor {
     // Quantazie LPC coefficients if selected
     if (this._quantOpt)
       this._lpcCoeff = this.quantizeLPC(this._lpcCoeff, this._kCoeff, this._quantBits);
+
+    // Reverse K's
+    if (this._reverseKOpt)
+        this._lpcCoeff = this.reverseKCoeff(this._lpcCoeff, this._kCoeff);
+
 
 
     let errorBuffer = new Float32Array(this._frameSize)
@@ -382,6 +391,13 @@ class Vocoder extends AudioWorkletProcessor {
     // recalculate LPC
     return this.recalculateLPC(lpcCoeff, kCoeff);
 
+  }
+
+  // Reverse K coefficients
+  reverseKCoeff(lpcCoeff, kCoeff){
+    kCoeff.reverse();
+    // Recalculate K's
+    return this.recalculateLPC(lpcCoeff, kCoeff);
   }
 
   recalculateLPC(lpcCoeff, kCoeff){
