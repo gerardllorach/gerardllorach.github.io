@@ -157,23 +157,12 @@ class Vocoder extends AudioWorkletProcessor {
 
         // compute RMS of pulse train
     this._impulseSignalRMS = this.blockRMS(this._impulseSignal);
-
-    const sum = this._impulseSignal.reduce((acc, i) => acc += i);
-    const count = this._impulseSignal.length;
-    const calculatedMean = sum/count;
-
-    console.log(calculatedMean);
+    let scalingFactor = errorRMS * this._impulseSignalRMS;
 
     // scale each impulse to desired RMS
-    //for (let i=0; i<this._frameSize; i++){
-    //  this._impulseSignal[i] = errorRMS / this._impulseSignalRMS;
-    //}
-
-    //const sum2 = this._impulseSignal.reduce((acc, i) => acc += i);
-    //const count2 = this._impulseSignal.length;
-    //const calculatedMean2 = sum/count;
-
-    //console.log(calculatedMean2);
+    for (let i=0; i<this._frameSize; i++){
+      this._impulseSignal[i] = this._impulseSignal[i] * scalingFactor;
+    }
 
     return this._impulseSignal;
   }
