@@ -80,9 +80,13 @@ class Vocoder extends AudioWorkletProcessor {
     this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
     this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
 
+    // excitation variables
+    this._tonalConfidence = 0;
+    this._confidenceTonalThreshold = 0.9;
+
     // buffer for fundamental period estimation
     this._fundPeriodLen = this._upperACFBound - this._lowerACFBound;
-    this._fundPeriodBuffer = []; // new Float32Array(this.fundPeriodLen);
+    this._fundPeriodBuffer = [];
 
 
 
@@ -129,6 +133,47 @@ class Vocoder extends AudioWorkletProcessor {
       lastIndex = i;
     }
     this._pulseOffset = lastIndex + periodSamples - this._frameSize;
+
+    return this._impulseSignal;
+  }
+
+  createNoiseExcitation(errorRMS){
+
+    let r1 = 0;
+    let r2 = 0;
+
+    for (let i=0; i<this._frameSize; i=i+2) {
+      // draw two independent samples from unit distribution in interval [0,1]
+      r1 = Math.random();
+      r2 = Math.random();
+
+      // perform the Box-Muller transform:
+      // the normal distributed value is given by the angle (cos/sin part) randomly set by first sample
+      // and scaled via the second sample -> result standard normally distributed values
+      // we get two independent samples from this!
+      this._impulseSignal[i] = Math.sqrt(-2.0 * Math.log(r1)) * Math.cos(2.0 * Math.PI * r2);
+      this._impulseSignal[i+1] = Math.sqrt(-2.0 * Math.log(r1)) * Math.sin(2.0 * Math.PI * r2);
+    }
+
+        // compute RMS of pulse train
+    this._impulseSignalRMS = this.blockRMS(this._impulseSignal);
+
+    const sum = this._impulseSignal.reduce((acc, i) => acc += i);
+    const count = this._impulseSignal.length;
+    const calculatedMean = sum/count;
+
+    console.log(calculatedMean);
+
+    // scale each impulse to desired RMS
+    //for (let i=0; i<this._frameSize; i++){
+    //  this._impulseSignal[i] = errorRMS / this._impulseSignalRMS;
+    //}
+
+    //const sum2 = this._impulseSignal.reduce((acc, i) => acc += i);
+    //const count2 = this._impulseSignal.length;
+    //const calculatedMean2 = sum/count;
+
+    //console.log(calculatedMean2);
 
     return this._impulseSignal;
   }
@@ -199,10 +244,6 @@ class Vocoder extends AudioWorkletProcessor {
     // Quantazie LPC coefficients if selected
     if (this._quantOpt)
       this._lpcCoeff = this.quantizeLPC(this._lpcCoeff, this._kCoeff, this._quantBits);
-    
-
-    let periodSamples = this.autocorrPeriod(inBuffer);
-    this._fundFreq = sampleRate / periodSamples;
 
 
     let errorBuffer = new Float32Array(this._frameSize)
@@ -223,7 +264,18 @@ class Vocoder extends AudioWorkletProcessor {
 
     this._rms = this.blockRMS(errorBuffer);
 
-    this.createTonalExcitation(periodSamples, this._rms); // writes on this._impulseSignal
+    let periodSamples = this.autocorrPeriod(inBuffer);
+    this._fundFreq = sampleRate / periodSamples;
+
+
+    //console.log(this._tonalConfidence)
+
+    // decide whether to use periodic or noise excitation for the synthesis
+    if (this._tonalConfidence > this._confidenceTonalThreshold) {
+      this.createTonalExcitation(periodSamples, this._rms);
+    } else {
+      this.createNoiseExcitation(this._rms);
+    } // both write on this._impulseSignal
 
     // Filter
     // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
@@ -261,6 +313,9 @@ class Vocoder extends AudioWorkletProcessor {
     }
     // partially stolen from https://stackoverflow.com/questions/11301438/return-index-of-greatest-value-in-an-array
     let maxIdx = this._lowerACFBound + this._fundPeriodBuffer.indexOf(Math.max(...this._fundPeriodBuffer));
+
+    // compute the "confidence" that a block even has tonal excitation (for switching to noise excitation if not)
+    this._tonalConfidence = this.autoCorr(inBuffer, maxIdx) / this.autoCorr(inBuffer, 0);
 
     return maxIdx;
   }
@@ -362,7 +417,7 @@ class Vocoder extends AudioWorkletProcessor {
     let qK = ((k+1)/2)*steps; // Transform to range 0 to (2^bits -1) e.g. 0 -- 3
     qK = Math.round(qK)/steps; // Quantize and scale down (range 0 to 1) e.g. (0 1 2 3 )/3 = 0 to 1
     qK = qK*2 - 1; // Transform to range -1 to 1
-    
+
     return qK;
   }
 
@@ -477,8 +532,8 @@ class Vocoder extends AudioWorkletProcessor {
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
         kCoeff: this._kCoeff.slice(),
-	      blockRMS: this._rms,
-	      fundamentalFrequencyHz: this._fundFreq,
+	blockRMS: this._rms,
+	fundamentalFrequencyHz: this._fundFreq,
       });
 
     }
