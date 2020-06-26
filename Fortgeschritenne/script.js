@@ -383,6 +383,7 @@ startDemo = () => {
 
     }
     // Instructions for drag and drop
+    canvasCtx.fillStyle = "white";
     canvasCtx.font = "20px Georgia";
     canvasCtx.fillText("Drag and drop audio files here!", canvas.width/2 - canvas.width*0.1, 3*canvas.height/4);
 
