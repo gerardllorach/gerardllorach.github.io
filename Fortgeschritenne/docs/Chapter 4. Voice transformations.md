@@ -43,4 +43,4 @@ quantizeK(k, numBits){
 
 
 #### Reverse K's
-Reversing the K's is a relatively easy operation and the voice transformation is quite effective.
+Reversing the K's is a relatively easy operation and the voice transformation is quite effective. The array of K's needs to be swapped/reversed. Arrays in javascript have the inherent method "reverse()", which swappes the values of an array. Once the k array is swapped, the LPC coefficients need to be recalculated. The effect resembles some of the robot voices used in Star Wars first movies.
