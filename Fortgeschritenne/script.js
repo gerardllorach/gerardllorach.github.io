@@ -381,15 +381,14 @@ startDemo = () => {
 	      canvasCtx.translate(-wposW,-wposH);
       }
 
-      // Instructions for drag and drop
-      canvasCtx.font = "20px Georgia";
-      canvasCtx.fillText("Drag and drop audio files here!", canvas.width/2 - canvas.width*0.1, 3*canvas.height/4);
-
-      // Draw more
     }
+    // Instructions for drag and drop
+    canvasCtx.font = "20px Georgia";
+    canvasCtx.fillText("Drag and drop audio files here!", canvas.width/2 - canvas.width*0.1, 3*canvas.height/4);
 
+    // Draw more
 
-      requestAnimationFrame(draw);
+    requestAnimationFrame(draw);
   }
   requestAnimationFrame(draw);
 
