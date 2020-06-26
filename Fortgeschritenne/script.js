@@ -84,6 +84,7 @@ startDemo = () => {
   const quantInfo = document.getElementById("quantInfo");
   const selSoundContainer = document.getElementById("selSoundContainer");
   const selectAudioList = document.getElementById("selectAudio");
+  const loopAudioButton = document.getElementById("loopButton");
   const canvas = document.getElementById("myCanvas");
   const canvasCtx = canvas.getContext("2d");
   // Resize canvas
@@ -109,6 +110,11 @@ startDemo = () => {
       soundSource.buffer = soundBuffer[selectAudioList.value];
       connect_source();
 
+      // Loop?
+      if (loopAudioButton.checked)
+      	soundSource.loop = true;
+
+
       soundSource.start();
       console.log('start');
       playing = true;
@@ -132,10 +138,12 @@ startDemo = () => {
     if (inputButton.checked) {
       // hide list of audio
       selSoundContainer.style.visibility = 'hidden';
+      loopAudioButton.parentElement.hidden = true;
 
     } else {
       // show list of audio
       selSoundContainer.style.visibility = 'visible';
+      loopAudioButton.parentElement.hidden = false;
       //soundSource.buffer = soundBuffer[selectAudioList.value];
     }
     if (playing){
@@ -191,6 +199,14 @@ startDemo = () => {
       id: "reverseK",
       reverseKOpt: reverseKButton.checked,
     })
+  }
+  // Loop/Unloop
+  loopAudioButton.onclick = () => {
+  	if (loopAudioButton.checked) {
+  		soundSource.loop = true;
+  	} else {
+  		soundSource.loop = false;
+  	}
   }
 
 
@@ -356,7 +372,7 @@ startDemo = () => {
         canvasCtx.translate(-wposW,-wposH);
       }
 
-      // visualize block RMS as circle with varying radius
+      // Visualize block RMS as circle with varying radius
       if (blockRMS != undefined){
 	      wposW = canvas.width/4;
 	      wposH = canvas.height/3;
@@ -364,6 +380,12 @@ startDemo = () => {
 	      drawRMSCircle(blockRMS);
 	      canvasCtx.translate(-wposW,-wposH);
       }
+
+      // Instructions for drag and drop
+      canvasCtx.font = "20px Georgia";
+      canvsaCtx.fillText("Drag and drop audio files here!", canvas.width/2 - canvas.width*0.1, 3*canvas.height/4);
+
+      // Draw more
     }
 
 
