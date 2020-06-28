@@ -72,8 +72,9 @@ class Vocoder extends AudioWorkletProcessor {
     this._quantBits = 2;
     // Reverse K's
     this._reverseKOpt = false;
-
-
+    // resampling before analysis
+    this._resamplingFactor = 1; // 0.5 is funny chipmunk voice, 1 is neutral
+    
     // Synthesis
     // Create impulse signal
     this._impulseSignal = new Float32Array(this._frameSize);
@@ -225,16 +226,51 @@ class Vocoder extends AudioWorkletProcessor {
     }
   }
 
+  resampleLinear(inBuffer, origFramesize, resamplingFactor) {
+
+    let newFramesize = Math.round(origFramesize * resamplingFactor);
+    let newBuffer = new Float32Array(newFramesize); // TODO: this may create problems in LPC processing
+
+    for (let x_new=0; x_new<newFramesize; x_new++) {
+
+      // new steps are integer indices, old steps are related to this via the inverse resampling factor
+      let oldStep = x_new / resamplingFactor;
+      
+      // use the neighbouring integer indices of the old samplerate
+      // (if identical the sample should be used twice and the result should be equal to this value)
+      let l_idx = Math.floor(oldStep);
+      let r_idx = Math.ceil(oldStep);
+      
+      if (l_idx === r_idx){
+	newBuffer[x_new] = inBuffer[l_idx];
+      } else{
+      let x_left = l_idx * resamplingFactor;
+      let x_right = r_idx * resamplingFactor;
+      let y_left = inBuffer[l_idx];
+      let y_right = inBuffer[r_idx]; // TODO: maybe this will create problems at some point, e.g. resampling factor larger 1
+      
+	newBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
+      }
+    }
+    // TODO: not sure whether any scaling is necessary, lets see
+    // TODO: smoothing
+    return newBuffer;
+  }
+
 
 
   LPCprocessing(inBuffer, outBuffer){
 
     let M = 12;
 
-    // Getting the a coefficients and k coefficients
-    // The a coefficients are used for the filter
-    this._lpcCoeff = this.LPCcoeff(inBuffer, M);
-
+    if (this._resamplingFactor != 1) {
+      this._resampBuffer = this.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);
+      this._lpcCoeff = this.LPCcoeff(this._resampBuffer, M);
+    } else {
+      // Getting the a coefficients and k coefficients
+      // The a coefficients are used for the filter
+      this._lpcCoeff = this.LPCcoeff(inBuffer, M);
+    }
     // Quantazie LPC coefficients if selected
     if (this._quantOpt)
       this._lpcCoeff = this.quantizeLPC(this._lpcCoeff, this._kCoeff, this._quantBits);
@@ -542,6 +578,7 @@ class Vocoder extends AudioWorkletProcessor {
         kCoeff: this._kCoeff.slice(),
 	blockRMS: this._rms,
 	fundamentalFrequencyHz: this._fundFreq,
+	resampBuffer: this._resampBuffer,
       });
 
     }
@@ -563,6 +600,7 @@ class Vocoder extends AudioWorkletProcessor {
         kCoeff: this._kCoeff.slice(),
 	blockRMS: this._rms,
 	fundamentalFrequencyHz: this._fundFreq,
+	resampBuffer: this._resampBuffer,
       });
       this._lastUpdate = currentTime;
     }
