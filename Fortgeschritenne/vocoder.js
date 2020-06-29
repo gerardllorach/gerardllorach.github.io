@@ -72,9 +72,15 @@ class Vocoder extends AudioWorkletProcessor {
     this._quantBits = 2;
     // Reverse K's
     this._reverseKOpt = false;
+
     // resampling before analysis
-    this._resamplingFactor = 1; // 0.5 is funny chipmunk voice, 1 is neutral
-    
+    this._resamplingFactor = 0.7; // 0.5 is funny chipmunk voice, 1 is neutral
+    let {resampFiltB, resampFiltA} = this.designAntiAliasLowpass(this._resamplingFactor); // B transversal, A recursive coefficients
+    this._resampFiltB = resampFiltB;
+    this._resampFiltA = resampFiltA; // this should probably go into an update function once there is a GUI element
+    console.log(resampFiltB)
+    console.log(resampFiltA)
+
     // Synthesis
     // Create impulse signal
     this._impulseSignal = new Float32Array(this._frameSize);
@@ -113,6 +119,36 @@ class Vocoder extends AudioWorkletProcessor {
     } else if (e.data.id = "reverseK"){
       this._reverseKOpt = e.data.reverseKOpt;
     }
+  }
+
+
+  designAntiAliasLowpass(resamplingFactor){
+    if (resamplingFactor >= 1){
+      // 'neutral' filter that does nothing
+      var resampFiltB = [1, 0, 0];
+      var resampFiltA = [1, 0, 0];
+
+    } else {
+      // parametric lowpass filter design taken from RBJ's audio EQ cookbook. also helpful: http://aikelab.net/filter/
+      var omega = Math.PI * resamplingFactor; // w = 2*pi*f/fs
+      var Q = 0.95; // almost no resonance peak since we dont want to influence formant structure
+      var sin_om = Math.sin(omega);
+      var cos_om = Math.cos(omega);
+      var alpha = sin_om / (2.0 * Q);
+
+      var a0 = 1.0 + alpha; // only used for scaling, set to 1 later
+      var a1 = -2.0 * cos_om / a0;
+      var a2 = (1.0 - alpha) / a0;
+      var b0 = (1.0 - cos_om) / 2.0 / a0;
+      var b1 = (1.0 - cos_om) / a0;
+      var b2 = (1.0 - cos_om) / 2.0 / a0;
+
+      var resampFiltB = [b0, b1, b2];
+      var resampFiltA = [1, a1, a2];
+    }
+
+    return {resampFiltB: resampFiltB,
+	    resampFiltA: resampFiltA};
   }
 
 
@@ -228,6 +264,8 @@ class Vocoder extends AudioWorkletProcessor {
 
   resampleLinear(inBuffer, origFramesize, resamplingFactor) {
 
+    let filteredBuffer = this.filterBiquad(this._resampFiltB, this._resampFiltA, inBuffer);
+
     let newFramesize = Math.round(origFramesize * resamplingFactor);
     let newBuffer = new Float32Array(newFramesize); // TODO: this may create problems in LPC processing
 
@@ -235,29 +273,53 @@ class Vocoder extends AudioWorkletProcessor {
 
       // new steps are integer indices, old steps are related to this via the inverse resampling factor
       let oldStep = x_new / resamplingFactor;
-      
+
       // use the neighbouring integer indices of the old samplerate
       // (if identical the sample should be used twice and the result should be equal to this value)
       let l_idx = Math.floor(oldStep);
       let r_idx = Math.ceil(oldStep);
-      
+
       if (l_idx === r_idx){
-	newBuffer[x_new] = inBuffer[l_idx];
+	newBuffer[x_new] = filteredBuffer[l_idx];
       } else{
       let x_left = l_idx * resamplingFactor;
       let x_right = r_idx * resamplingFactor;
-      let y_left = inBuffer[l_idx];
-      let y_right = inBuffer[r_idx]; // TODO: maybe this will create problems at some point, e.g. resampling factor larger 1
-      
+      let y_left = filteredBuffer[l_idx];
+      let y_right = filteredBuffer[r_idx]; // TODO: maybe this will create problems at some point, e.g. resampling factor larger 1
+
 	newBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
       }
     }
-    // TODO: not sure whether any scaling is necessary, lets see
-    // TODO: smoothing
+
     return newBuffer;
   }
 
 
+  filterBiquad(coeffB, coeffA, inBuffer){ // TODO: probably should have used BiquadFilterNode from the Web Audio API (they use the same formulas as RBJ!)
+
+    // create buffer for output and temp values saved inbetween
+    var outBuffer = new Float32Array(inBuffer.length);
+    var xBuff = [0, 0, 0];
+    var yBuff = [0, 0];
+
+    for (let i=0; i<inBuffer.length; i++){
+
+
+      // update x-Buffer
+      xBuff.unshift(inBuffer[i]); // add new entry to the beginning
+      xBuff.pop(); // remove last entry
+
+      // compute one sample of the output
+      outBuffer[i] = coeffB[0] * xBuff[0] + coeffB[1] * xBuff[1] + coeffB[2] * xBuff[2] - coeffA[1] * yBuff[0] - coeffA[2] * yBuff[1];
+      //outBuffer[i] = 0.33 * xBuff[0] + 0.33 * xBuff[1] + 0.33 * xBuff[2] - coeffA[1] * yBuff[0] - coeffA[2] * yBuff[1];
+
+      // update y-Buffer
+      yBuff.unshift(outBuffer[i]);
+      yBuff.pop();
+
+    }
+    return outBuffer;
+  }
 
   LPCprocessing(inBuffer, outBuffer){
 
