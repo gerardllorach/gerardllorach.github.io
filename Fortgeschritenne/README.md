@@ -1,6 +1,6 @@
 # H+A Fortgeschrittenenprojekt SoSe 2020
  Gerard Llorach and Mattes Ohlenbusch
- 
+
 ## Description
 This repository contains the project for the subject "Fortgeschrittenen-Projektpraktikum Hörtechnik und Audiologie". The project consists on using LPC coefficients to do voice transformations and/or visualization of the vocal tract in real-time. The description of the project is organized in chapters.
 
@@ -35,5 +35,5 @@ Yet to do
 ## Todo list
 * Synthesis with white noise (done, threshold voice/unvoiced to be done) - Gerard
 * Slider for threshold voice/unvoiced - Gerard
-* Vocal tract lengthening - Mattes (sampling/resampling frames)
+* Vocal tract lengthening - Mattes (sampling/resampling frames) -> kind of done, missing a slider or similar
 * Check modular audioworklet, separate js files?
