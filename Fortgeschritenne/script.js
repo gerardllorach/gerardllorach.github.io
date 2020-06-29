@@ -80,6 +80,8 @@ startDemo = () => {
   const vocoderButton = document.getElementById("vocoderButton");
   const quantButton = document.getElementById("quantButton");
   const quantSlider = document.getElementById("quantSlider");
+  const tractLengthSlider = document.getElementById("tractLengthSlider");
+  const tractLengthInfo = document.getElementById("tractLengthInfo");
   const reverseKButton = document.getElementById("reverseKButton");
   const quantInfo = document.getElementById("quantInfo");
   const selSoundContainer = document.getElementById("selSoundContainer");
@@ -156,13 +158,15 @@ startDemo = () => {
   vocoderButton.onclick = () => {
     // Show/Hide HTML vocoder options
     if (vocoderButton.checked){
-    	// Unhide vocoder HTML elements
-    	quantButton.parentElement.hidden = false;
-    	reverseKButton.parentElement.hidden = false;
+      // Unhide vocoder HTML elements
+      quantButton.parentElement.hidden = false;
+      reverseKButton.parentElement.hidden = false;
+      tractLengthSlider.parentElement.hidden = false;
     } else {
-		  // Hide vocoder HTML elements
-	  	quantButton.parentElement.hidden = true;
-	  	reverseKButton.parentElement.hidden = true;
+      // Hide vocoder HTML elements
+      quantButton.parentElement.hidden = true;
+      reverseKButton.parentElement.hidden = true;
+      tractLengthSlider.parentElement.hidden = true;
     }
     // Create audio connections
     disconnect_all();
@@ -208,6 +212,17 @@ startDemo = () => {
   		soundSource.loop = false;
   	}
   }
+
+  tractLengthSlider.oninput = () => {
+    // Send tract length slider value to AudioWorklet
+    vocoderNode.port.postMessage({
+      id: "resampling",
+      resampFactor: tractLengthSlider.value,
+    })
+    // Show value
+    tractLengthInfo.innerHTML = tractLengthSlider.value + "x length";
+  }
+
 
 
 
