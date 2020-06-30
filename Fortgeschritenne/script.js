@@ -47,6 +47,7 @@ startDemo = () => {
         kCoeff = e.data.kCoeff;
 	      blockRMS = e.data.blockRMS;
       }
+      tractStretch = e.data.tractStretch;
       // Get information every second
       if (e.data.message == 'Update'){
         console.log(e.data);
@@ -71,6 +72,7 @@ startDemo = () => {
   let oBlock = null;
   let lpcCoeff = null;
   let kCoeff = null;
+  let tractStretch = 1.0;
 
 
 
@@ -382,18 +384,18 @@ startDemo = () => {
         let normValue = Math.max(...a);
         for (let i = 0; i<kCoeff.length; i++){
           let value = 50*a[i]/normValue;
-          canvasCtx.fillRect(i*20, -value/2, 20, value);
+          canvasCtx.fillRect(i*20*tractStretch, -value/2, 20*tractStretch, value);
         }
         canvasCtx.translate(-wposW,-wposH);
       }
 
       // Visualize block RMS as circle with varying radius
       if (blockRMS != undefined){
-	      wposW = canvas.width/4;
-	      wposH = canvas.height/3;
+	wposW = canvas.width/4;
+	wposH = canvas.height/3;
         canvasCtx.translate(wposW,wposH);
-	      drawRMSCircle(blockRMS);
-	      canvasCtx.translate(-wposW,-wposH);
+	drawRMSCircle(blockRMS);
+	canvasCtx.translate(-wposW,-wposH);
       }
 
     }

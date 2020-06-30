@@ -660,6 +660,7 @@ class Vocoder extends AudioWorkletProcessor {
         kCoeff: this._kCoeff.slice(),
 	blockRMS: this._rms,
 	fundamentalFrequencyHz: this._fundFreq,
+	tractStretch: this._resamplingFactor,
       });
 
     }
@@ -681,6 +682,7 @@ class Vocoder extends AudioWorkletProcessor {
         kCoeff: this._kCoeff.slice(),
 	blockRMS: this._rms,
 	fundamentalFrequencyHz: this._fundFreq,
+	tractStretch: this._resamplingFactor,
       });
       this._lastUpdate = currentTime;
     }
