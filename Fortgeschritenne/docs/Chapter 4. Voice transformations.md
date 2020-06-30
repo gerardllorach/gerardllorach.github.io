@@ -44,3 +44,32 @@ quantizeK(k, numBits){
 
 #### Reverse K's
 Reversing the K's is a relatively easy operation and the voice transformation is quite effective. The array of K's needs to be swapped/reversed. Arrays in javascript have the inherent method "reverse()", which swappes the values of an array. Once the k array is swapped, the LPC coefficients need to be recalculated. The effect resembles some of the robot voices used in Star Wars first movies.
+
+
+### Changing the vocal tract length
+The length of the vocal tract influences the sound of individual voices. In the Tube section model of the vocal tract, this parameter has an influence on the size of individual tubes. The relation can be described as
+```
+length = (sound_velocity * section_count) / (2 * sampling_rate).
+```
+In order to implement this in a block-processing scheme, a practical way is to resample individual speech blocks before LPC analysis. For a shorter vocal tract, this would correspond to a higher sampling rate, whereas downsampling would have the effect of longer tube sections.
+
+In terms of computational efficiency, a reasonable resampling method is sample-wise linear interpolation. For a single sample, the computation depends on two values in the direct vicinity.
+The following code shows the computation necessary to interpolate a sample at time `x_new` from the original samples at times `x_right` and `x_left` with values `y_right` and `y_left`, where left and right refers to the position of the samples obtained with the original sampling rate relative to `x_new`.
+```javascript
+newValue = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
+```
+In the case of downsampling for vocal tract elongation, it is necessary to use an anti-aliasing lowpass filter. In our implementation, the filtering is realized via a second-order-section filter. The coefficients are computed as follows:
+```javascript
+const omega = 2.0 * Math.PI * cutoff_frequency / sampling_rate;
+const alpha = Math.sin(omega) / (2.0 * Q);
+const a0 = 1.0 + alpha;
+const a1 = -2.0 * Math.cos(omega) / a0;
+const a2 = (1.0 - Math.cos(omega)) / a0;
+const b0 = (1.0 - ) / 2.0 / a0;
+const b1 = (1.0 - Math.cos(omega)) / a0;
+const b2 = (1.0 - Math.cos(omega)) / 2.0 / a0;
+
+var resampFiltB = [b0, b1, b2];
+var resampFiltA = [1, a1, a2];
+```
+Here, the `Q`-factor describes the trade-off between an overshoot at the resonance frequency slightly below the cutoff frequency and the steepness of the cutoff in the frequency domain.

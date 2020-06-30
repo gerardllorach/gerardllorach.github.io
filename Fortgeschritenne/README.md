@@ -35,5 +35,5 @@ Yet to do
 ## Todo list
 * Synthesis with white noise (done, threshold voice/unvoiced to be done) - Gerard
 * Slider for threshold voice/unvoiced - Gerard
-* Vocal tract lengthening - Mattes (sampling/resampling frames) -> kind of done, missing a slider or similar
+* Vocal tract lengthening - Mattes (sampling/resampling frames) -> done
 * Check modular audioworklet, separate js files?
