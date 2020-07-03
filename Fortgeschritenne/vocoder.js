@@ -75,7 +75,10 @@ class Vocoder extends AudioWorkletProcessor {
 
     // resampling before analysis
     this._resamplingFactor = 1; // 0.5 is funny chipmunk voice, 1 is neutral
+    this._resampFiltB = [1, 0, 0];
+    this._resampFiltA = [1, 0, 0];
     this.updateResampler(this._resamplingFactor);
+
 
     // Synthesis
     // Create impulse signal
