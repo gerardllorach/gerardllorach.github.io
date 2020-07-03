@@ -155,7 +155,7 @@ class Vocoder extends AudioWorkletProcessor {
     } else {
       // parametric lowpass filter design taken from RBJ's audio EQ cookbook. also helpful: http://aikelab.net/filter/
       const omega = Math.PI * resamplingFactor * 0.75; // w = 2*pi*f/fs
-      const Q = 0.95; // almost no resonance peak since we dont want to influence formant structure
+      const Q = 2.0;//0.95; // almost no resonance peak since we dont want to influence formant structure
       const sin_om = Math.sin(omega);
       const cos_om = Math.cos(omega);
       const alpha = sin_om / (2.0 * Q);
