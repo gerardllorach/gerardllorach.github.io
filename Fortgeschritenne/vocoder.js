@@ -75,7 +75,10 @@ class Vocoder extends AudioWorkletProcessor {
 
     // resampling before analysis
     this._resamplingFactor = 1; // 0.5 is funny chipmunk voice, 1 is neutral
+    this._resampFiltB = [1, 0, 0];
+    this._resampFiltA = [1, 0, 0];
     this.updateResampler(this._resamplingFactor);
+
 
     // Synthesis
     // Create impulse signal
@@ -86,7 +89,7 @@ class Vocoder extends AudioWorkletProcessor {
     this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
 
     // excitation variables
-    this._tonalConfidence = 0;
+    this._tonalConfidence = 0.5;
     this._confidenceTonalThreshold = 0.1;
     this._periodFactor = 1;
 
@@ -126,6 +129,10 @@ class Vocoder extends AudioWorkletProcessor {
       this.updateResampler(this._resamplingFactor);
       break;
 
+    case "voicedThreshold":
+      this._confidenceTonalThreshold = e.data.voicedThreshold;
+      break;
+
     default: // any unknown ID: log the message ID
       console.log("unknown message received:")
       console.log(e.data.id)
@@ -134,22 +141,21 @@ class Vocoder extends AudioWorkletProcessor {
 
   updateResampler(factor) {
     // this function should be called on every change of the resampling factor for the vocal tract length
-    const {resampFiltB, resampFiltA} = this.designAntiAliasLowpass(factor); // B transversal, A recursive coefficients
-    this._resampFiltB = resampFiltB;
-    this._resampFiltA = resampFiltA;
+    this.designAntiAliasLowpass(factor, this._resampFiltB, this._resampFiltA); // B transversal, A recursive coefficients
   }
 
 
-  designAntiAliasLowpass(resamplingFactor){
+  designAntiAliasLowpass(resamplingFactor, resampFiltB, resampFiltA){
+
     if (resamplingFactor >= 1){
       // 'neutral' filter that does nothing
-      var resampFiltB = [1, 0, 0];
-      var resampFiltA = [1, 0, 0];
+      resampFiltB = [1, 0, 0];
+      resampFiltA = [1, 0, 0];
 
     } else {
       // parametric lowpass filter design taken from RBJ's audio EQ cookbook. also helpful: http://aikelab.net/filter/
-      const omega = Math.PI * resamplingFactor; // w = 2*pi*f/fs
-      const Q = 0.95; // almost no resonance peak since we dont want to influence formant structure
+      const omega = Math.PI * resamplingFactor * 0.75; // w = 2*pi*f/fs
+      const Q = 2.0;//0.95; // almost no resonance peak since we dont want to influence formant structure
       const sin_om = Math.sin(omega);
       const cos_om = Math.cos(omega);
       const alpha = sin_om / (2.0 * Q);
@@ -161,12 +167,9 @@ class Vocoder extends AudioWorkletProcessor {
       const b1 = (1.0 - cos_om) / a0;
       const b2 = (1.0 - cos_om) / 2.0 / a0;
 
-      var resampFiltB = [b0, b1, b2];
-      var resampFiltA = [1, a1, a2];
+      resampFiltB = [b0, b1, b2];
+      resampFiltA = [1, a1, a2];
     }
-
-    return {resampFiltB: resampFiltB,
-	    resampFiltA: resampFiltA};
   }
 
 
@@ -373,11 +376,11 @@ class Vocoder extends AudioWorkletProcessor {
     // Iterate for each sample. O(fSize*M)
     for (let i = 0; i< inBuffer.length; i++){
       for (let j = 0; j<M+1; j++){
-	in_idx = i + j; // i don't really know what should happen in this case, add zeros?
-	  if (in_idx >= inBuffer.length){
-	    in_idx -= inBuffer.length;
-	  }
-          errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
+        in_idx = i + j; // i don't really know what should happen in this case, add zeros?
+    	  if (in_idx >= inBuffer.length){
+    	    in_idx -= inBuffer.length;
+    	  }
+        errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
       }
     }
 
@@ -663,9 +666,9 @@ class Vocoder extends AudioWorkletProcessor {
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
         kCoeff: this._kCoeff.slice(),
-	blockRMS: this._rms,
-	fundamentalFrequencyHz: this._fundFreq,
-	tractStretch: this._resamplingFactor,
+        blockRMS: this._rms,
+        fundamentalFrequencyHz: this._fundFreq,
+        tractStretch: this._resamplingFactor,
       });
 
     }
@@ -685,9 +688,10 @@ class Vocoder extends AudioWorkletProcessor {
         oddBlock: this._block2.slice(),
         lpcCoeff: this._lpcCoeff.slice(),
         kCoeff: this._kCoeff.slice(),
-	blockRMS: this._rms,
-	fundamentalFrequencyHz: this._fundFreq,
-	tractStretch: this._resamplingFactor,
+        blockRMS: this._rms,
+        fundamentalFrequencyHz: this._fundFreq,
+        tractStretch: this._resamplingFactor,
+        tonalConfidence: this._tonalConfidence,
       });
       this._lastUpdate = currentTime;
     }

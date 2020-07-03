@@ -88,9 +88,15 @@ DONE:
       </div>
       <!-- Vocal tract length slider -->
       <div class="row" hidden>
-	<p id="tractLengthName" style="color: white">Vocal tract length stretch factor</p>
+	      <p id="tractLengthName" style="color: white">Vocal tract length stretch factor</p>
         <input id="tractLengthSlider" type="range" min="0.5" max="2" value="1" step="0.1" style="color:white;position:relative; z-index: 3;">
         <p id="tractLengthInfo" style="color: white"></p>
+      </div>
+      <!-- Voiced/Unvoiced slider -->
+      <div class="row" hidden>
+        <p style="color: white">Voiced/unvoiced threshold</p>
+        <input id="voicedThresSlider" type="range" min="0.0" max="1" value="0.4" step="0.01" style="color:white;position:relative; z-index: 3;">
+        <p id="voicedThresInfo" style="color: white"></p>
       </div>
       <!-- Reverse k's button -->
       <div class="row" hidden>
