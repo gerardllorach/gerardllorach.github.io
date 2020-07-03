@@ -1,7 +1,7 @@
 ## Chapter 3. Voice synthesis
 
 ### Voiced and unvoiced threshold
-According to the vocal tract model, voiced sounds (vowels and nasal consonants, e.g., /m/ and /n/) can be synthesized with a tonal excitation signal, and unvoiced sounds (consonants) with white noise. We use the autocorrelation to detect if a sound is voiced or unvoiced. With the autocorrelation, we are checking how periodic is a signal. An explanation of the function is given in [Chapter 2](docs/Chapter%202.%20LPC%20coefficients.md). In our implementation we calculate a normalized tonal confidence. To compute it, the maximum autocorrelation value given a certain delay (`maxIdx`) is divided by the autocorrelation at zero delay:
+According to the vocal tract model, voiced sounds (vowels and nasal consonants, e.g., /m/ and /n/) can be synthesized with a tonal excitation signal, and unvoiced sounds (consonants) with white noise. We use the autocorrelation to detect if a sound is voiced or unvoiced. With the autocorrelation, we are checking how periodic is a signal. An explanation of the function is given in [Chapter 2](Chapter%202.%20LPC%20coefficients.md). In our implementation we calculate a normalized tonal confidence. To compute it, the maximum autocorrelation value given a certain delay (`maxIdx`) is divided by the autocorrelation at zero delay:
 
 ```javascript
 // "Confidence" that a block has tonal excitation (for switching to noise excitation if not)
