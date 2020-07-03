@@ -6,6 +6,8 @@ startDemo = () => {
   // Start AudioContext
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   const audioCtx = new AudioContext({sampleRate:12000});
+  //const audioCtx = new AudioContext();
+
   // AudioContext nodes
   // Analyser node - Gets the wave buffer (and fft) on the main thread
   const analyser = audioCtx.createAnalyser();
@@ -21,10 +23,14 @@ startDemo = () => {
   soundSource = audioCtx.createBufferSource();
 
   // ask user to allow mic input
+  if (navigator.mediaDevices) {
   navigator.mediaDevices.getUserMedia({audio: true})
     .then(function(stream) {
       streamSource = audioCtx.createMediaStreamSource(stream);
     });
+  } else {
+    console.log('getUserMedia not supported on your browser!');
+  }
 
   // Log AudioContext sampling rate
   console.log("Sampling rate: " + audioCtx.sampleRate + "Hz.");

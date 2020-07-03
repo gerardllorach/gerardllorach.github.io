@@ -633,6 +633,11 @@ class Vocoder extends AudioWorkletProcessor {
     const input = inputs[0];
     const output = outputs[0];
 
+    // return false if no inputs exists (this is specified in the AudioWorkletProcessor interface documentation)
+    if (input.length == 0) {
+      return false;
+    }
+
     for (let channel = 0; channel < output.length; ++channel) {
 
       const inputChannel = input[channel];
