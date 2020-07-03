@@ -184,6 +184,8 @@ class Vocoder extends AudioWorkletProcessor {
     // now create pulse train with given period
     for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
       this._excitationSignal[i] = 1;
+      if (i+1 < this._frameSize)
+        this._excitationSignal[i+1] = -1;
     }
 
     // compute RMS of pulse train
@@ -374,6 +376,7 @@ class Vocoder extends AudioWorkletProcessor {
 
 
     let errorBuffer = this._errorBuffer;
+    errorBuffer.fill(0); // Reset erroBuffer
     // compute error signal and its RMS
     let in_idx = 0;
 
