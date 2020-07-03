@@ -191,12 +191,15 @@ class Vocoder extends AudioWorkletProcessor {
     let lastIndex = 0;
 
     // scale each impulse to desired RMS
-    for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
+    for (let i=this._pulseOffset; i<this._frameSize/2; i+=periodSamples){
       this._impulseSignal[i] = errorRMS / this._impulseSignalRMS;
       lastIndex = i;
     }
     this._pulseOffset = lastIndex + periodSamples - this._frameSize;
 
+    for (let i=lastIndex; i<this._frameSize; i+=periodSamples){
+      this._impulseSignal[i] = errorRMS / this._impulseSignalRMS;
+    }
     return this._impulseSignal;
   }
 
