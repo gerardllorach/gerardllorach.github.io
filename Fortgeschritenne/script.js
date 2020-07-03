@@ -85,6 +85,7 @@ startDemo = () => {
   const tractLengthSlider = document.getElementById("tractLengthSlider");
   const tractLengthInfo = document.getElementById("tractLengthInfo");
   const reverseKButton = document.getElementById("reverseKButton");
+  const voicedThresSlider = document.getElementById("voicedThresSlider");
   const quantInfo = document.getElementById("quantInfo");
   const selSoundContainer = document.getElementById("selSoundContainer");
   const selectAudioList = document.getElementById("selectAudio");
@@ -164,11 +165,13 @@ startDemo = () => {
       quantButton.parentElement.hidden = false;
       reverseKButton.parentElement.hidden = false;
       tractLengthSlider.parentElement.hidden = false;
+      voicedThresSlider.parentElement.hidden = false;
     } else {
       // Hide vocoder HTML elements
       quantButton.parentElement.hidden = true;
       reverseKButton.parentElement.hidden = true;
       tractLengthSlider.parentElement.hidden = true;
+      voicedThresSlider.parentElement.hidden = true;
     }
     // Create audio connections
     disconnect_all();
@@ -223,6 +226,14 @@ startDemo = () => {
     })
     // Show value
     tractLengthInfo.innerHTML = tractLengthSlider.value + "x length";
+  }
+
+  voicedThresSlider.oninput = () => {
+  	// Send voiced/unvoiced slider value to AudioWorklet
+  	vocoderNode.port.postMessage({
+      id: "voicedThreshold",
+      voicedThreshold: voicedThresSlider.value,
+    })
   }
 
 

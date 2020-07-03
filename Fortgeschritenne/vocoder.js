@@ -86,7 +86,7 @@ class Vocoder extends AudioWorkletProcessor {
     this._upperACFBound = Math.ceil(sampleRate / 70); // 70 Hz lower frequency limit -> upper limit
 
     // excitation variables
-    this._tonalConfidence = 0;
+    this._tonalConfidence = 0.5;
     this._confidenceTonalThreshold = 0.1;
     this._periodFactor = 1;
 
@@ -124,6 +124,10 @@ class Vocoder extends AudioWorkletProcessor {
     case "resampling":
       this._resamplingFactor = e.data.resampFactor;
       this.updateResampler(this._resamplingFactor);
+      break;
+
+    case "voicedThreshold":
+      this._confidenceTonalThreshold = e.data.voicedThreshold;
       break;
 
     default: // any unknown ID: log the message ID
@@ -373,11 +377,11 @@ class Vocoder extends AudioWorkletProcessor {
     // Iterate for each sample. O(fSize*M)
     for (let i = 0; i< inBuffer.length; i++){
       for (let j = 0; j<M+1; j++){
-	in_idx = i + j; // i don't really know what should happen in this case, add zeros?
-	  if (in_idx >= inBuffer.length){
-	    in_idx -= inBuffer.length;
-	  }
-          errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
+        in_idx = i + j; // i don't really know what should happen in this case, add zeros?
+    	  if (in_idx >= inBuffer.length){
+    	    in_idx -= inBuffer.length;
+    	  }
+        errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
       }
     }
 
