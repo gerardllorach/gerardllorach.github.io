@@ -138,17 +138,16 @@ class Vocoder extends AudioWorkletProcessor {
 
   updateResampler(factor) {
     // this function should be called on every change of the resampling factor for the vocal tract length
-    const {resampFiltB, resampFiltA} = this.designAntiAliasLowpass(factor); // B transversal, A recursive coefficients
-    this._resampFiltB = resampFiltB;
-    this._resampFiltA = resampFiltA;
+    this.designAntiAliasLowpass(factor, this._resampFiltB, this._resampFiltA); // B transversal, A recursive coefficients
   }
 
 
-  designAntiAliasLowpass(resamplingFactor){
+  designAntiAliasLowpass(resamplingFactor, resampFiltB, resampFiltA){
+
     if (resamplingFactor >= 1){
       // 'neutral' filter that does nothing
-      var resampFiltB = [1, 0, 0];
-      var resampFiltA = [1, 0, 0];
+      resampFiltB = [1, 0, 0];
+      resampFiltA = [1, 0, 0];
 
     } else {
       // parametric lowpass filter design taken from RBJ's audio EQ cookbook. also helpful: http://aikelab.net/filter/
@@ -165,12 +164,9 @@ class Vocoder extends AudioWorkletProcessor {
       const b1 = (1.0 - cos_om) / a0;
       const b2 = (1.0 - cos_om) / 2.0 / a0;
 
-      var resampFiltB = [b0, b1, b2];
-      var resampFiltA = [1, a1, a2];
+      resampFiltB = [b0, b1, b2];
+      resampFiltA = [1, a1, a2];
     }
-
-    return {resampFiltB: resampFiltB,
-	    resampFiltA: resampFiltA};
   }
 
 
