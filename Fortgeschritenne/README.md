@@ -23,7 +23,7 @@ The LPC coefficients and the Levinson algorithm.
 Excitation signals, signal energy, pitch detection and filtering.
 
 #### [Chapter 4. Voice transformations](docs/Chapter%204.%20Voice%20transformations.md)
-Quantization of lattice coefficients (k) and reversal of lattice coefficients.
+Transformation of K coefficients (PARCOR coeff) and vocal tract length modifications.
 
 #### [Chapter 5. Web interface](docs/Chapter%205.%20Web%20interface.md)
 Canvas HTML, microphone input, drag and drop of audio files.
