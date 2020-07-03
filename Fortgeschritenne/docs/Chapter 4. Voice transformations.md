@@ -73,3 +73,7 @@ var resampFiltB = [b0, b1, b2];
 var resampFiltA = [1, a1, a2];
 ```
 Here, the `Q`-factor describes the trade-off between an overshoot at the resonance frequency slightly below the cutoff frequency and the steepness of the cutoff in the frequency domain.
+
+TODO: FILTER PROBLEMS
+http://aikelab.net/filter/
+Aliasing problems because not steep filter and Q too low...
