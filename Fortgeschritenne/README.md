@@ -33,7 +33,8 @@ Yet to do
 
 
 ## Todo list
-* Synthesis with white noise (done, threshold voice/unvoiced to be done) - Gerard
-* Slider for threshold voice/unvoiced - Gerard
-* Vocal tract lengthening - Mattes (sampling/resampling frames) -> done
+* Fix excitation signal
+* Use original error signal (checks for overlap and add)
+* Write more in the chapters
 * Check modular audioworklet, separate js files?
+
