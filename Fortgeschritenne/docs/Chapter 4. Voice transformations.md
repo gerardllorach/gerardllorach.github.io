@@ -47,7 +47,7 @@ Reversing the K's is a relatively easy operation and the voice transformation is
 
 
 ### Changing the vocal tract length
-The length of the vocal tract influences the sound of individual voices. In the Tube section model of the vocal tract, this parameter has an influence on the size of individual tubes. The relation can be described as
+The length of the vocal tract influences the sound of individual voices. In the Tube section model of the vocal tract, this parameter has an influence on the size of individual tubes. A good explanation can be found in [Lecture 14 from UCSB](https://www.ece.ucsb.edu/Faculty/Rabiner/ece259/digital%20speech%20processing%20course/lectures_new/Lecture%2014_winter_2012.pdf). The relation can be described as
 ```
 length = (sound_velocity * section_count) / (2 * sampling_rate).
 ```
@@ -58,7 +58,7 @@ The following code shows the computation necessary to interpolate a sample at ti
 ```javascript
 newValue = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
 ```
-In the case of downsampling for vocal tract elongation, it is necessary to use an anti-aliasing lowpass filter. In our implementation, the filtering is realized via a second-order-section filter. The coefficients are computed as follows:
+In the case of downsampling for vocal tract elongation, it is necessary to use an anti-aliasing lowpass filter. In our implementation, the filtering is realized via a second-order-section filter (biquad filter). The coefficients are computed as follows:
 ```javascript
 const omega = 2.0 * Math.PI * cutoff_frequency / sampling_rate;
 const alpha = Math.sin(omega) / (2.0 * Q);
@@ -74,6 +74,4 @@ var resampFiltA = [1, a1, a2];
 ```
 Here, the `Q`-factor describes the trade-off between an overshoot at the resonance frequency slightly below the cutoff frequency and the steepness of the cutoff in the frequency domain.
 
-TODO: FILTER PROBLEMS
-http://aikelab.net/filter/
-Aliasing problems because not steep filter and Q too low...
+In our application the user can change the vocal tract length in real-time using a slider. Because of this, the biquad filter parameters need to change in real-time. Our current implementation has gradual decay (it's not very steep at the cutoff frequency) which creates aliasing artifacts. We decided to multiply the cutoff frequency of the filter by a factor of 0.75 to reduce the artifacts. We set the `Q`-factor to 2 to increase the steepness of the filter and to further reduce artifacts. The effects of the `Q`-factor and the filter implementation can be seen here: http://aikelab.net/filter/
