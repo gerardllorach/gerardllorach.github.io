@@ -31,7 +31,7 @@ Note that only the relevant values of the autocorrelation function need to be co
 
 ### The excitation signal
 
-## Tonal excitation
+#### Tonal excitation
 In order to generate voiced sounds, we can generate a pulse-train signal. The pulse-train signal defines the pitch and can look like this: 1, -1, 0, 0, 0, ... , 0, 0, 1, -1, 0, 0, 0... The tonal excitation is then generated based on the resulting period `periodSamples` for a single frame as follows:
 ```javascript
 for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
@@ -44,10 +44,10 @@ this._pulseOffset = lastIndex + periodSamples - this._frameSize;
 The offset from the last pulse is saved in order to prevent inconsistencies inbetween block transitions, which could potentially result in clicks. Not shown is the normalization to the same RMS value per block as the error signal, so that the resulting synthesis signals has approximately the same energy per block as the original signal.
 This approach is very useful in terms of processing time required, as only a part of the autocorrelation values are used within the peak search; also, within the linear prediction routine the autocorrelation is computed already. The high efficiency comes with a disadvantage however: Since it is limited to maxima of the sample-wise autocorrelation, there will a higher precision for lower frequencies (larger fundamental periods) than for high fundamental frequencies (short periods) as the grid on which the fundamental period is searched is related to the potential fundamental frequencies by inversion.
 
-## Noise excitation
+#### Noise excitation
 The consonants can be modelled using filtered noise. Whispered speech can also be modelled using noise, as there is no glottal excitation. We generated white noise using the `Math.random()` function.
 
-## Residual error excitation
+#### Residual error excitation
 Using the principles of LPC, the speech signal can be perfectly reconstructed with the error/residual signal and the LPC coefficients. This error signal can be obtained by convolving the LPC coefficients and the input signal. The code looks like this:
 
 ```javascript
@@ -65,7 +65,7 @@ for (let i = 0; i< inBuffer.length; i++){
 
 This error signal looks like the tonal excitation when the sounds are voiced and like noise when the sounds are unvoiced. The tonal and noise excitation are basically approximating how the error signal looks. Using this signal we can reconstruct the original speech signal.
 
-## Gain and volume
+#### Gain and volume
 Calculating the error signal is necessary to be able to apply the correct gain to the excitation signals (tonal and noise). The RMS of the error signal gives us information about the energy that the excitation signal should have. Therefore, in the case of the tonal and noise excitation, we need to normalize the RMS of the excitation signal to match the RMS of the error signal. 
 
 ### Using the LPC coefficients to filter an excitation signal
