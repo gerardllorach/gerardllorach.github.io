@@ -178,14 +178,12 @@ class Vocoder extends AudioWorkletProcessor {
 
     // first write zeros
     for (let i=0; i<this._frameSize; i++) {
-	this._excitationSignal[i] = 0;
+      this._excitationSignal[i] = 0;
     }
 
     // now create pulse train with given period
     for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
       this._excitationSignal[i] = 1;
-      if (i+1<this._frameSize)
-        this._excitationSignal[i+1]=-1;
     }
 
     // compute RMS of pulse train
