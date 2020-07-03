@@ -86,6 +86,7 @@ startDemo = () => {
   const tractLengthInfo = document.getElementById("tractLengthInfo");
   const reverseKButton = document.getElementById("reverseKButton");
   const voicedThresSlider = document.getElementById("voicedThresSlider");
+  const voicedThresInfo = document.getElementById("voicedThresInfo");
   const quantInfo = document.getElementById("quantInfo");
   const selSoundContainer = document.getElementById("selSoundContainer");
   const selectAudioList = document.getElementById("selectAudio");
@@ -233,7 +234,9 @@ startDemo = () => {
   	vocoderNode.port.postMessage({
       id: "voicedThreshold",
       voicedThreshold: voicedThresSlider.value,
-    })
+    });
+    // Show value
+    voicedThresInfo.innerHTML = voicedThresSlider.value;
   }
 
 
