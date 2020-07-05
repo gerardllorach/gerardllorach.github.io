@@ -196,8 +196,8 @@ class Vocoder extends AudioWorkletProcessor {
       this._excitationSignal[i] = 1;
       lastIndex = i;
       
-      if (i+1 < this._frameSize) // Does this make sense?
-        this._excitationSignal[i+1] = -1;
+      //if (i+1 < this._frameSize) // Does this make sense?
+        //this._excitationSignal[i+1] = -1;
     }
     // new offset (should be an index of the second half of the block)
     this._pulseOffset = lastIndex - this._frameSize/2 + periodSamples;
