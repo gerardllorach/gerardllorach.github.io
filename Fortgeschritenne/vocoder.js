@@ -189,16 +189,18 @@ class Vocoder extends AudioWorkletProcessor {
     // index for offset computation
     let lastIndex = 0;
 
+    console.log(periodSamples);
+    
     // now create pulse train with given period
     for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
       this._excitationSignal[i] = 1;
       lastIndex = i;
-      this._excitationSignal[i] = 1;
-      //if (i+1 < this._frameSize) // Does this make sense?
-      //  this._excitationSignal[i+1] = -1;
+      
+      if (i+1 < this._frameSize) // Does this make sense?
+        this._excitationSignal[i+1] = -1;
     }
     // new offset (should be an index of the second half of the block)
-    this._pulseOffset = this._frameSize/2 + periodSamples  - this._frameSize + lastIndex;
+    this._pulseOffset = lastIndex - this._frameSize/2 + periodSamples;
 
     // save second half for next block
     for (let i=0; i<this._frameSize/2; i++){
@@ -725,6 +727,7 @@ class Vocoder extends AudioWorkletProcessor {
         fundamentalFrequencyHz: this._fundFreq,
         tractStretch: this._resamplingFactor,
         tonalConfidence: this._tonalConfidence,
+	excitationSignal: this._excitationSignal,
       });
       this._lastUpdate = currentTime;
     }
