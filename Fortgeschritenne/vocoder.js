@@ -188,8 +188,6 @@ class Vocoder extends AudioWorkletProcessor {
     }
     // index for offset computation
     let lastIndex = 0;
-
-    console.log(periodSamples);
     
     // now create pulse train with given period
     for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
