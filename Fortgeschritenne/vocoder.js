@@ -82,8 +82,9 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Synthesis
     // Create impulse signal
+    this._oldTonalBuffer = new Float32Array(this._frameSize/2);
     this._excitationSignal = new Float32Array(this._frameSize);
-    this._errorBuffer = new Float32Array(this._frameSize)
+    this._errorBuffer = new Float32Array(this._frameSize);
 
     // autocorrelation indices for fundamental frequency estimation
     this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
@@ -97,6 +98,8 @@ class Vocoder extends AudioWorkletProcessor {
     // buffer for fundamental period estimation
     this._fundPeriodLen = this._upperACFBound - this._lowerACFBound;
     this._fundPeriodBuffer = [];
+    this._oldPeriodSamples = this._upperACFBound;
+    this._pulseOffset = 0;
 
 
 
@@ -176,35 +179,45 @@ class Vocoder extends AudioWorkletProcessor {
 
   createTonalExcitation(periodSamples, errorRMS){
 
-    // first write zeros
-    for (let i=0; i<this._frameSize; i++) {
-      this._excitationSignal[i] = 0;
+    // first put old half, then zeros
+    for (let i=0; i<this._frameSize/2; i++) {
+      this._excitationSignal[i] = this._oldTonalBuffer[i];
     }
+    for (let i=this._frameSize/2; i<this._frameSize; i++) {
+	this._excitationSignal[i] = 0;
+    }
+    // index for offset computation
+    let lastIndex = 0;
 
+    console.log(periodSamples);
+    
     // now create pulse train with given period
     for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
       this._excitationSignal[i] = 1;
+      lastIndex = i;
+      
       //if (i+1 < this._frameSize) // Does this make sense?
-      //  this._excitationSignal[i+1] = -1;
+        //this._excitationSignal[i+1] = -1;
     }
+    // new offset (should be an index of the second half of the block)
+    this._pulseOffset = lastIndex - this._frameSize/2 + periodSamples;
 
+    // save second half for next block
+    for (let i=0; i<this._frameSize/2; i++){
+      this._oldTonalBuffer[i] = this._excitationSignal[i+this._frameSize/2];
+    }
     // compute RMS of pulse train
     this._excitationSignalRMS = this.blockRMS(this._excitationSignal);
-
-    let lastIndex = 0;
+    let scaleFactor = errorRMS / this._excitationSignalRMS;
 
     // scale each impulse to desired RMS
-    for (let i=this._pulseOffset; i<this._frameSize/2; i+=periodSamples){
-      this._excitationSignal[i] = errorRMS / this._excitationSignalRMS;
-      lastIndex = i;
+    for (let i=0; i<this._frameSize; i++){
+      this._excitationSignal[i] = this._excitationSignal[i] * scaleFactor;
     }
-    this._pulseOffset = lastIndex + periodSamples - this._frameSize;
 
-    for (let i=lastIndex; i<this._frameSize; i+=periodSamples){
-      this._excitationSignal[i] = errorRMS / this._excitationSignalRMS;
-    }
     return this._excitationSignal;
   }
+
 
   createNoiseExcitation(errorRMS){
 
@@ -232,6 +245,8 @@ class Vocoder extends AudioWorkletProcessor {
     for (let i=0; i<this._frameSize; i++){
       this._excitationSignal[i] = this._excitationSignal[i] * scalingFactor;
     }
+    // reset offset for tonal excitation
+    this._pulseOffset = 0
 
     return this._excitationSignal;
   }
@@ -281,9 +296,8 @@ class Vocoder extends AudioWorkletProcessor {
     // Only synthesize when it is filled
     if (indBlock == this._numBlocksInFrame - 1){
 
-      //bypass(buffer, synthBuffer);
+      //this.bypass(buffer, synthBuffer);
       //ema(buffer, synthBuffer);
-
       synthBuffer = this.LPCprocessing(buffer, synthBuffer);
 
     }
@@ -353,6 +367,8 @@ class Vocoder extends AudioWorkletProcessor {
     return outBuffer;
   }
 
+
+
   LPCprocessing(inBuffer, outBuffer){
 
     let M = 12;
@@ -371,23 +387,33 @@ class Vocoder extends AudioWorkletProcessor {
 
     // Reverse K's
     if (this._reverseKOpt)
-        this._lpcCoeff = this.reverseKCoeff(this._lpcCoeff, this._kCoeff);
-
-
-
+      this._lpcCoeff = this.reverseKCoeff(this._lpcCoeff, this._kCoeff);
+    
     let errorBuffer = this._errorBuffer;
     errorBuffer.fill(0); // Reset erroBuffer
-    // compute error signal and its RMS
-    let in_idx = 0;
 
-    // Iterate for each sample. O(fSize*M)
+
+    //this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    let tempBuff = [];
+    for (let j = 0; j<this._lpcCoeff.length; j++){
+      tempBuff[j] = 0;
+    }
+
     for (let i = 0; i< inBuffer.length; i++){
-      for (let j = 0; j<M+1; j++){
+      tempBuff.unshift(inBuffer[i]);
+      tempBuff.pop();
+
+      for (let j = 0; j<this._lpcCoeff.length; j++){
+        errorBuffer[i] += tempBuff[j]*this._lpcCoeff[j]; // a[0]*x[n] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
+	
+/*      for (let j = 0; j<M+1; j++){
         in_idx = i + j;
     	  if (in_idx >= inBuffer.length){ // Resolve out of bounds
     	    continue;//in_idx -= inBuffer.length;
     	  }
-        errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
+        errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M] */
+
       }
     }
 
@@ -418,15 +444,15 @@ class Vocoder extends AudioWorkletProcessor {
     for (let i = 0; i< inBuffer.length; i++){
       outBuffer[i] = this._excitationSignal[i]; // x[n]
       for (let j = 1; j<M+1; j++){
-        outBuffer[i] -= y_prev[M-j]*this._lpcCoeff[j]; // - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
+        outBuffer[i] -= y_prev[j-1]*this._lpcCoeff[j]; // - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
       }
-      y_prev.shift(1); // Deletes first element of array
-      y_prev.push(outBuffer[i]); // Adds a new element at the end of the array
-
+      y_prev.unshift(outBuffer[i]);
+      y_prev.pop();
     }
 
-    return outBuffer;
+    this._oldPeriodSamples = periodSamples;
 
+    return outBuffer;
   }
 
 
@@ -575,14 +601,14 @@ class Vocoder extends AudioWorkletProcessor {
 
   // Bypass. Checks for overlap and add artifacts
   bypass(inBuffer, outBuffer){
-    for (let i = 0; i < buffer.length; i++){
+    for (let i = 0; i < inBuffer.length; i++){
         outBuffer[i] = inBuffer[i];
       }
   }
 
   // Exponential Moving Average filter. Needs last sample of the previous synth buffer
   ema (inBuffer, outBuffer){
-    for (let i = 0; i < buffer.length; i++){
+    for (let i = 0; i < inBuffer.length; i++){
       // Smooth, EMA
       if (i == 0){// Skip first sample (Or take it from previous buffer?)
         outBuffer[i] = inBuffer[i];
@@ -607,6 +633,8 @@ class Vocoder extends AudioWorkletProcessor {
            X O O O O  --> Odd block
      o o o x ...      --> Synthesized block (outBlock)
     */
+
+
     let indBlockPair = this._countBlock % this._modIndexBuffer;
     let indBlockOdd = (indBlockPair + this._modIndexBuffer/2) % this._modIndexBuffer;
 
@@ -622,10 +650,10 @@ class Vocoder extends AudioWorkletProcessor {
       // Use hanning window sin^2(pi*n/N)
       let hannPairBValue = Math.pow(Math.sin(Math.PI*indPair/this._frameSize), 2);
       let hannOddBValue = Math.pow(Math.sin(Math.PI*indOdd/this._frameSize), 2);
+      //let hannPairBValue = 0.54 - 0.46 * Math.cos(2*Math.PI*indPair/(this._frameSize-1));
+      //let hannOddBValue = 0.54 - 0.46 * Math.cos(2*Math.PI*indOdd/(this._frameSize-1));
       // Hanning windowed frames addition
       outBlock[i] = hannPairBValue*this._pairSynthBuffer[indPair] + hannOddBValue*this._oddSynthBuffer[indOdd];
-
-
 
       // Debugging
       //outBlock[i] = this._pairBuffer[i];//this._pairSynthBuffer[indPair];//0.5*this._pairSynthBuffer[indPair] + 0.5*this._oddSynthBuffer[indOdd];
@@ -699,6 +727,7 @@ class Vocoder extends AudioWorkletProcessor {
         fundamentalFrequencyHz: this._fundFreq,
         tractStretch: this._resamplingFactor,
         tonalConfidence: this._tonalConfidence,
+	excitationSignal: this._excitationSignal,
       });
       this._lastUpdate = currentTime;
     }
