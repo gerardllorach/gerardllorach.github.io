@@ -6,6 +6,8 @@
 
 
 */
+import * as LPC from './LPC.js';
+
 class Vocoder extends AudioWorkletProcessor {
 
   // currentFrame, currentTime and sampleRate are global variables of AudioWorkletProcessor
@@ -27,6 +29,7 @@ class Vocoder extends AudioWorkletProcessor {
     const fSize = frameDuration*sampleRate;
     // Make the framesize multiple of 128 (audio render block size)
     this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize/sampleRate;
+    this._frameSize = Math.max(128*2, this._frameSize); // Force a minimum of two blocks
 
     this._numBlocksInFrame = this._frameSize/128; // 8 at 48kHz and 20ms window
     // Predefined 50% overlap
@@ -72,6 +75,8 @@ class Vocoder extends AudioWorkletProcessor {
     this._quantBits = 2;
     // Reverse K's
     this._reverseKOpt = false;
+    // Perfect synthesis
+    this._perfectSynthOpt = false;
 
     // resampling before analysis
     this._resamplingFactor = 1; // 0.5 is funny chipmunk voice, 1 is neutral
@@ -126,6 +131,10 @@ class Vocoder extends AudioWorkletProcessor {
 
     case "reverseK":
       this._reverseKOpt = e.data.reverseKOpt;
+      break;
+
+    case "perfectSynth":
+      this._perfectSynthOpt = e.data.perfectSynthOpt;
       break;
 
     case "resampling":
@@ -313,7 +322,6 @@ class Vocoder extends AudioWorkletProcessor {
     let newBuffer = new Float32Array(newFramesize);
 
 
-
     for (let x_new=0; x_new<newFramesize; x_new++) {
 
       // new steps are integer indices, old steps are related to this via the inverse resampling factor
@@ -325,14 +333,14 @@ class Vocoder extends AudioWorkletProcessor {
       let r_idx = Math.ceil(oldStep);
 
       if (l_idx === r_idx){
-	newBuffer[x_new] = filteredBuffer[l_idx];
+        newBuffer[x_new] = filteredBuffer[l_idx];
       } else{
-	let x_left = l_idx * resamplingFactor;
-	let x_right = r_idx * resamplingFactor;
-	let y_left = filteredBuffer[l_idx];
-	let y_right = filteredBuffer[r_idx];
+      	let x_left = l_idx * resamplingFactor;
+      	let x_right = r_idx * resamplingFactor;
+      	let y_left = filteredBuffer[l_idx];
+      	let y_right = filteredBuffer[r_idx];
 
-	newBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
+        newBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
       }
     }
 
@@ -373,50 +381,31 @@ class Vocoder extends AudioWorkletProcessor {
 
     if (this._resamplingFactor != 1) {
       this._resampBuffer = this.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);
-      this._lpcCoeff = this.LPCcoeff(this._resampBuffer, M);
+      LPC.calculateLPC(this._resampBuffer, M, this._lpcCoeff, this._kCoeff);
     } else {
       // Getting the a coefficients and k coefficients
       // The a coefficients are used for the filter
-      this._lpcCoeff = this.LPCcoeff(inBuffer, M);
+      LPC.calculateLPC(inBuffer, M, this._lpcCoeff, this._kCoeff);
     }
+
+    // Calculate error signal
+    LPC.calculateErrorSignal(inBuffer, this._lpcCoeff, this._errorBuffer);
+
+
     // Quantazie LPC coefficients if selected
     if (this._quantOpt)
-      this._lpcCoeff = this.quantizeLPC(this._lpcCoeff, this._kCoeff, this._quantBits);
+      this.quantizeLPC(this._lpcCoeff, this._kCoeff, this._quantBits);
 
     // Reverse K's
     if (this._reverseKOpt)
-      this._lpcCoeff = this.reverseKCoeff(this._lpcCoeff, this._kCoeff);
+      this.reverseKCoeff(this._lpcCoeff, this._kCoeff);
     
-    let errorBuffer = this._errorBuffer;
-    errorBuffer.fill(0); // Reset erroBuffer
+
+    
 
 
-    //this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    let tempBuff = [];
-    for (let j = 0; j<this._lpcCoeff.length; j++){
-      tempBuff[j] = 0;
-    }
-
-    for (let i = 0; i< inBuffer.length; i++){
-      tempBuff.unshift(inBuffer[i]);
-      tempBuff.pop();
-
-      for (let j = 0; j<this._lpcCoeff.length; j++){
-        errorBuffer[i] += tempBuff[j]*this._lpcCoeff[j]; // a[0]*x[n] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
-	
-/*      for (let j = 0; j<M+1; j++){
-        in_idx = i + j;
-    	  if (in_idx >= inBuffer.length){ // Resolve out of bounds
-    	    continue;//in_idx -= inBuffer.length;
-    	  }
-        errorBuffer[i] += inBuffer[in_idx]*this._lpcCoeff[j]; // a[0]*x[0] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M] */
-
-      }
-    }
-
-
-    this._rms = this.blockRMS(errorBuffer);
+    this._rms = this.blockRMS(this._errorBuffer);
 
     // longer vocal tract -> less fundamental period
     let periodSamples = Math.round(this._periodFactor * this.autocorrPeriod(inBuffer));
@@ -429,26 +418,17 @@ class Vocoder extends AudioWorkletProcessor {
     } else {
       this.createNoiseExcitation(this._rms);
     } // both write on this._excitationSignal
-
-    // Filter
-    // y[n] = b[0]*x[n]/a[0] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
-    //y[n] = x[n] - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
-    let y_prev = this._prevY;// As many zeros as M;
-    for (let i=0; i< M; i++){
-      y_prev[i] = 0;
-    }
-
-    // Iterate for each sample. O(fSize*M)
-    for (let i = 0; i< inBuffer.length; i++){
-      outBuffer[i] = this._excitationSignal[i]; // x[n]
-      for (let j = 1; j<M+1; j++){
-        outBuffer[i] -= y_prev[j-1]*this._lpcCoeff[j]; // - a[1]*y[n-1] - a[2]*y[n-2] ... - a[M]*y[n-M]
-      }
-      y_prev.unshift(outBuffer[i]);
-      y_prev.pop();
-    }
-
     this._oldPeriodSamples = periodSamples;
+
+
+    // Perfect excitation
+    if (this._perfectSynthOpt)
+      this._excitationSignal = this._errorBuffer.slice();
+
+
+    // IIR Filter
+    LPC.IIRFilter(this._excitationSignal, this._lpcCoeff, outBuffer);
+
 
     return outBuffer;
   }
@@ -462,13 +442,13 @@ class Vocoder extends AudioWorkletProcessor {
     }
 
     for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
-      this._fundPeriodBuffer[shift-this._lowerACFBound] = this.autoCorr(inBuffer, shift);
+      this._fundPeriodBuffer[shift-this._lowerACFBound] = LPC.autoCorr(inBuffer, shift);
     }
     // partially stolen from https://stackoverflow.com/questions/11301438/return-index-of-greatest-value-in-an-array
     let maxIdx = this._lowerACFBound + this._fundPeriodBuffer.indexOf(Math.max(...this._fundPeriodBuffer));
 
     // compute the "confidence" that a block even has tonal excitation (for switching to noise excitation if not)
-    this._tonalConfidence = this.autoCorr(inBuffer, maxIdx) / this.autoCorr(inBuffer, 0);
+    this._tonalConfidence = LPC.autoCorr(inBuffer, maxIdx) / LPC.autoCorr(inBuffer, 0);
 
     return maxIdx;
   }
@@ -485,55 +465,6 @@ class Vocoder extends AudioWorkletProcessor {
     return rmsValue;
   }
 
-  // Based on Levinson proposal in:
-  /*Dutoit, T., 2004, May. Unusual teaching short-cuts to the Levinson
-  and lattice algorithms. In 2004 IEEE International Conference on Acoustics,
-  Speech, and Signal Processing (Vol. 5, pp. V-1029). IEEE.
-  */
-  LPCcoeff(inBuffer, M){
-    // Levinson's method
-    //let M = 12;
-    // Autocorrelation values
-    let phi = []; // Garbage collector
-    for (let i = 0; i<M+1; i++){
-      phi[i] = this.autoCorr(inBuffer, i);
-    }
-
-    // M = 1
-    let a1_m = -phi[1] / phi[0];
-
-    this._kCoeff[0] = a1_m;
-
-
-    // Iterate to calculate coefficients
-    let coeff = [1, a1_m];
-    let tempCoeff = [1, a1_m];
-
-    let mu = 0;
-    let alpha = 0;
-    let k = 0;
-    for (let m = 0; m < M-1; m++){
-        mu = 0;
-        alpha = 0;
-        // Calculate mu and alpha
-        for (let i = 0; i<m+2; i++){
-            mu += coeff[i]*phi[m+2-i];
-            alpha += coeff[i]*phi[i];
-        }
-        k = - mu / alpha;
-
-        this._kCoeff[m+1] = k;
-        // Calculate new coefficients
-        coeff[m+2] = 0;
-        for (let i = 1; i<m+3; i++){
-            tempCoeff[i] = coeff[i] + coeff[m+2-i]*k;
-        }
-        coeff = tempCoeff.slice();
-    }
-
-    return coeff;
-  }
-
 
   // Quantize K coeficients
   // TODO: it gives the same result as matlab, but there are errors at lower bit rates??
@@ -544,34 +475,10 @@ class Vocoder extends AudioWorkletProcessor {
       kCoeff[i] = this.quantizeK(kCoeff[i], numBits);
     }
     // recalculate LPC
-    return this.recalculateLPC(lpcCoeff, kCoeff);
-
+    return LPC.recalculateLPC(lpcCoeff, kCoeff);
   }
 
-  // Reverse K coefficients
-  reverseKCoeff(lpcCoeff, kCoeff){
-    kCoeff.reverse();
-    // Recalculate K's
-    return this.recalculateLPC(lpcCoeff, kCoeff);
-  }
-
-  recalculateLPC(lpcCoeff, kCoeff){
-    let M = lpcCoeff.length-1;
-    // Recalulate coefficients
-    let qLpcCoeff = [1]; // Garbage collector
-    for (let m = 0; m < M; m++){
-      lpcCoeff[m+1] = 0;
-      for (let i = 1; i<m+2; i++){
-        qLpcCoeff[i] = lpcCoeff[i] + kCoeff[m]*lpcCoeff[m+1-i];
-      }
-      lpcCoeff = qLpcCoeff.slice();
-    }
-    return lpcCoeff;
-  }
-
-
-
-  // Quantize K's
+    // Quantize K's
   quantizeK(k, numBits){
     let steps = Math.pow(2, numBits)-1; // e.g. 4 steps -1 to 1 --> 0 -- 1 * 3
     let qK = ((k+1)/2)*steps; // Transform to range 0 to (2^bits -1) e.g. 0 -- 3
@@ -581,16 +488,13 @@ class Vocoder extends AudioWorkletProcessor {
     return qK;
   }
 
-  // Autocorrelation function
-  autoCorr(buffer, delay){
-    let value = 0;
-    for (let i = 0; i< buffer.length - delay; i++){
-      // Because autocorrelation is symmetric, I use "i + delay", not "i - delay"
-      value += buffer[i] * buffer[(i + delay)];
-    }
-    return value;
-  }
 
+  // Reverse K coefficients
+  reverseKCoeff(lpcCoeff, kCoeff){
+    kCoeff.reverse();
+    // Recalculate K's
+    return LPC.recalculateLPC(lpcCoeff, kCoeff);
+  }
 
 
 
@@ -702,6 +606,8 @@ class Vocoder extends AudioWorkletProcessor {
         blockRMS: this._rms,
         fundamentalFrequencyHz: this._fundFreq,
         tractStretch: this._resamplingFactor,
+        excitationSignal: this._excitationSignal,
+        errorSignal: this._errorBuffer,
       });
 
     }
@@ -725,7 +631,8 @@ class Vocoder extends AudioWorkletProcessor {
         fundamentalFrequencyHz: this._fundFreq,
         tractStretch: this._resamplingFactor,
         tonalConfidence: this._tonalConfidence,
-	excitationSignal: this._excitationSignal,
+		    excitationSignal: this._excitationSignal,
+        errorSignal: this._errorBuffer,
       });
       this._lastUpdate = currentTime;
     }

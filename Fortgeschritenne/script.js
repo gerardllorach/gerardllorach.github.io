@@ -5,8 +5,8 @@ console.log("v0.20");
 startDemo = () => {
   // Start AudioContext
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audioCtx = new AudioContext({sampleRate:12000});
-  //const audioCtx = new AudioContext();
+  //const audioCtx = new AudioContext({sampleRate:12000});
+  const audioCtx = new AudioContext();
 
   // AudioContext nodes
   // Analyser node - Gets the wave buffer (and fft) on the main thread
@@ -52,6 +52,8 @@ startDemo = () => {
         lpcCoeff = e.data.lpcCoeff;
         kCoeff = e.data.kCoeff;
 	      blockRMS = e.data.blockRMS;
+        excitationSignal = e.data.excitationSignal;
+        errorSignal = e.data.errorSignal;
       }
       tractStretch = e.data.tractStretch;
       // Get information every second
@@ -79,6 +81,8 @@ startDemo = () => {
   let lpcCoeff = null;
   let kCoeff = null;
   let tractStretch = 1.0;
+  let excitationSignal = [];
+  let errorSignal = [];
 
 
 
@@ -91,6 +95,7 @@ startDemo = () => {
   const tractLengthSlider = document.getElementById("tractLengthSlider");
   const tractLengthInfo = document.getElementById("tractLengthInfo");
   const reverseKButton = document.getElementById("reverseKButton");
+  const perfectSButton = document.getElementById("perfectSynthButton");
   const voicedThresSlider = document.getElementById("voicedThresSlider");
   const voicedThresInfo = document.getElementById("voicedThresInfo");
   const quantInfo = document.getElementById("quantInfo");
@@ -171,12 +176,14 @@ startDemo = () => {
       // Unhide vocoder HTML elements
       quantButton.parentElement.hidden = false;
       reverseKButton.parentElement.hidden = false;
+      perfectSButton.parentElement.hidden = false;
       tractLengthSlider.parentElement.hidden = false;
       voicedThresSlider.parentElement.hidden = false;
     } else {
       // Hide vocoder HTML elements
       quantButton.parentElement.hidden = true;
       reverseKButton.parentElement.hidden = true;
+      perfectSButton.parentElement.hidden = true;
       tractLengthSlider.parentElement.hidden = true;
       voicedThresSlider.parentElement.hidden = true;
     }
@@ -214,6 +221,14 @@ startDemo = () => {
     vocoderNode.port.postMessage({
       id: "reverseK",
       reverseKOpt: reverseKButton.checked,
+    })
+  }
+  // Perfect Synthesis on/off
+  perfectSButton.onclick = () => {
+    // Send quantization on/off
+    vocoderNode.port.postMessage({
+      id: "perfectSynth",
+      perfectSynthOpt: perfectSButton.checked,
     })
   }
   // Loop/Unloop
@@ -375,6 +390,21 @@ startDemo = () => {
       paintWave(oBlock);
       canvasCtx.translate(-wposW,-wposH);
 
+      // Plot excitationSignal
+      wposW = 100;
+      wposH = 5*canvas.height/6;
+      canvasCtx.translate(wposW,wposH);
+      paintWave(excitationSignal);
+      canvasCtx.translate(-wposW,-wposH);
+
+      // Plot excitationSignal
+      wposW = 100;
+      wposH = 5*canvas.height/6;
+      canvasCtx.translate(wposW,wposH);
+      paintWave(errorSignal);
+      canvasCtx.translate(-wposW,-wposH);
+
+
       // Plot LPC coefficients
       if (lpcCoeff !== undefined){
         wposW = canvas.width/2;
@@ -411,11 +441,11 @@ startDemo = () => {
 
       // Visualize block RMS as circle with varying radius
       if (blockRMS != undefined){
-	wposW = canvas.width/4;
-	wposH = canvas.height/3;
+        wposW = canvas.width/4;
+        wposH = canvas.height/3;
         canvasCtx.translate(wposW,wposH);
-	drawRMSCircle(blockRMS);
-	canvasCtx.translate(-wposW,-wposH);
+        drawRMSCircle(blockRMS);
+        canvasCtx.translate(-wposW,-wposH);
       }
 
     }
