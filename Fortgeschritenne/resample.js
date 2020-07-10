@@ -2,7 +2,7 @@
 
 
 
-class Resampler () {
+export class Resampler () {
 
 
   constructor(new_framesize, new_factor) {
@@ -43,7 +43,6 @@ class Resampler () {
   }
 
 
-
   update(factor) {
     // this function should be called on every change of the resampling factor for the vocal tract length
     this.clearResampBuffer()
@@ -79,8 +78,9 @@ class Resampler () {
   }
 
 
+  resampleLinear(inBuffer, origFramesize, resamplingFactor, resamplingBuffer) {
 
-  resampleLinear(inBuffer, origFramesize, resamplingFactor, resampBuffer) {
+    resampBuffer = resamplingBuffer || this.resampBuffer;
 
     // first filter with biquad lowpass at the new nyquist rate
     this.filteredBuffer = this.filterBiquad(this._resampFiltB, this._resampFiltA, inBuffer, this.filteredBuffer);
@@ -111,7 +111,6 @@ class Resampler () {
 
     return resampBuffer;
   }
-
 
 
   filterBiquad(coeffB, coeffA, inBuffer, outBuffer){

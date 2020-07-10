@@ -7,6 +7,7 @@
 
 */
 import * as LPC from './LPC.js';
+import * as resample from './resample.js';
 
 class Vocoder extends AudioWorkletProcessor {
 
@@ -79,11 +80,11 @@ class Vocoder extends AudioWorkletProcessor {
     this._perfectSynthOpt = false;
 
     // resampling before analysis
-    this._resamplingFactor = 1; // 0.5 is funny chipmunk voice, 1 is neutral
-    this._resampFiltB = [1, 0, 0];
-    this._resampFiltA = [1, 0, 0];
-    this.updateResampler(this._resamplingFactor);
-
+    this._resampler = new Resampler(this._frameSize, 1);
+    this._resamplingFactor = 1;
+    //this._resampFiltB = [1, 0, 0];
+    //this._resampFiltA = [1, 0, 0];
+    //this.updateResampler(this._resamplingFactor);
 
     // Synthesis
     // Create impulse signal
@@ -139,7 +140,7 @@ class Vocoder extends AudioWorkletProcessor {
 
     case "resampling":
       this._resamplingFactor = e.data.resampFactor;
-      this.updateResampler(this._resamplingFactor);
+      this._resampler.update(this.resamplingFactor);
       break;
 
     case "voicedThreshold":
@@ -149,39 +150,6 @@ class Vocoder extends AudioWorkletProcessor {
     default: // any unknown ID: log the message ID
       console.log("unknown message received:")
       console.log(e.data.id)
-    }
-  }
-
-  updateResampler(factor) {
-    // this function should be called on every change of the resampling factor for the vocal tract length
-    this.designAntiAliasLowpass(factor, this._resampFiltB, this._resampFiltA); // B transversal, A recursive coefficients
-  }
-
-
-  designAntiAliasLowpass(resamplingFactor, resampFiltB, resampFiltA){
-
-    if (resamplingFactor >= 1){
-      // 'neutral' filter that does nothing
-      resampFiltB = [1, 0, 0];
-      resampFiltA = [1, 0, 0];
-
-    } else {
-      // parametric lowpass filter design taken from RBJ's audio EQ cookbook. also helpful: http://aikelab.net/filter/
-      const omega = Math.PI * resamplingFactor * 0.75; // w = 2*pi*f/fs
-      const Q = 2.0;//0.95; // almost no resonance peak since we dont want to influence formant structure
-      const sin_om = Math.sin(omega);
-      const cos_om = Math.cos(omega);
-      const alpha = sin_om / (2.0 * Q);
-
-      const a0 = 1.0 + alpha; // only used for scaling, set to 1 later
-      const a1 = -2.0 * cos_om / a0;
-      const a2 = (1.0 - alpha) / a0;
-      const b0 = (1.0 - cos_om) / 2.0 / a0;
-      const b1 = (1.0 - cos_om) / a0;
-      const b2 = (1.0 - cos_om) / 2.0 / a0;
-
-      resampFiltB = [b0, b1, b2];
-      resampFiltA = [1, a1, a2];
     }
   }
 
@@ -197,12 +165,12 @@ class Vocoder extends AudioWorkletProcessor {
     }
     // index for offset computation
     let lastIndex = 0;
-    
+
     // now create pulse train with given period
     for (let i=this._pulseOffset; i<this._frameSize; i+=periodSamples){
       this._excitationSignal[i] = 1;
       lastIndex = i;
-      
+
       //if (i+1 < this._frameSize) // Does this make sense?
         //this._excitationSignal[i+1] = -1;
     }
@@ -310,78 +278,14 @@ class Vocoder extends AudioWorkletProcessor {
     }
   }
 
-  resampleLinear(inBuffer, origFramesize, resamplingFactor) {
-
-    // first filter with biquad lowpass at the new nyquist rate
-    const filteredBuffer = this.filterBiquad(this._resampFiltB, this._resampFiltA, inBuffer);
-
-    let newFramesize = Math.round(origFramesize * resamplingFactor);
-    if (resamplingFactor > 1){
-      newFramesize -= 1; // this is a cheap workaround but it doesnt matter so much for LPC analysis, right?
-    }
-    let newBuffer = new Float32Array(newFramesize);
-
-
-    for (let x_new=0; x_new<newFramesize; x_new++) {
-
-      // new steps are integer indices, old steps are related to this via the inverse resampling factor
-      let oldStep = x_new / resamplingFactor;
-
-      // use the neighbouring integer indices of the old samplerate
-      // (if identical the sample should be used twice and the result should be equal to this value)
-      let l_idx = Math.floor(oldStep);
-      let r_idx = Math.ceil(oldStep);
-
-      if (l_idx === r_idx){
-        newBuffer[x_new] = filteredBuffer[l_idx];
-      } else{
-      	let x_left = l_idx * resamplingFactor;
-      	let x_right = r_idx * resamplingFactor;
-      	let y_left = filteredBuffer[l_idx];
-      	let y_right = filteredBuffer[r_idx];
-
-        newBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
-      }
-    }
-
-    return newBuffer;
-  }
-
-
-  filterBiquad(coeffB, coeffA, inBuffer){ // TODO: probably should have used BiquadFilterNode from the Web Audio API (they use the same formulas as RBJ!)
-
-    // create buffer for output and temp values saved inbetween
-    let outBuffer = new Float32Array(inBuffer.length);
-    let xBuff = [0, 0, 0];
-    let yBuff = [0, 0];
-
-    for (let i=0; i<inBuffer.length; i++){
-
-
-      // update x-Buffer
-      xBuff.unshift(inBuffer[i]); // add new entry to the beginning
-      xBuff.pop(); // remove last entry
-
-      // compute one sample of the output
-      outBuffer[i] = coeffB[0] * xBuff[0] + coeffB[1] * xBuff[1] + coeffB[2] * xBuff[2] - coeffA[1] * yBuff[0] - coeffA[2] * yBuff[1];
-
-      // update y-Buffer
-      yBuff.unshift(outBuffer[i]);
-      yBuff.pop();
-
-    }
-    return outBuffer;
-  }
-
-
 
   LPCprocessing(inBuffer, outBuffer){
 
     let M = 20;
 
     if (this._resamplingFactor != 1) {
-      this._resampBuffer = this.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);
-      LPC.calculateLPC(this._resampBuffer, M, this._lpcCoeff, this._kCoeff);
+      this._resampler.resampBuffer = this._resampler.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);
+      LPC.calculateLPC(this._resampler.resampBuffer, M, this._lpcCoeff, this._kCoeff);
     } else {
       // Getting the a coefficients and k coefficients
       // The a coefficients are used for the filter
@@ -399,9 +303,9 @@ class Vocoder extends AudioWorkletProcessor {
     // Reverse K's
     if (this._reverseKOpt)
       this.reverseKCoeff(this._lpcCoeff, this._kCoeff);
-    
 
-    
+
+
 
 
 
