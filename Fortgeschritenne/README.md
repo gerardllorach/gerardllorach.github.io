@@ -33,8 +33,11 @@ Yet to do
 
 
 ## Todo list
-* Fix excitation signal
-* Use original error signal (checks for overlap and add)
-* Write more in the chapters
-* Check modular audioworklet, separate js files?
+* Fix excitation signal (error signal and excitation signal are very different)
+* Discontinuities between pulses
+* Spectral representation (use Web Audio API fft)
+* Manual resampling as Audio Worklet module?
+* Refactor and separate js files (resampling library)
+* 2D interface (age - gender) (requires vibrato and good speech reconstruction quality)
 
+* Write more in the chapters
