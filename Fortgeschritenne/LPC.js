@@ -107,18 +107,19 @@ export function calculateErrorSignal(inBuffer, lpcCoeff, inErrorSignal){
 	let errorSignal = inErrorSignal || new Float32Array(inBuffer.length);
 	errorSignal.fill(0); // Reset erroBuffer
 
-  tempBuffer.splice(0);
+  let tBuffer = tempBuffer || [];
+  tBuffer.splice(0);
   for (let j = 0; j<lpcCoeff.length; j++){
-    tempBuffer[j] = 0;
+    tBuffer[j] = 0;
   }
 
   // Convolution
   for (let i = 0; i< inBuffer.length; i++){
-    tempBuffer.unshift(inBuffer[i]); // Array at end looks like x[n], ..., x[2], x[1], x[0]
-    tempBuffer.pop();
+    tBuffer.unshift(inBuffer[i]); // Array at end looks like x[n], ..., x[2], x[1], x[0]
+    tBuffer.pop();
 
     for (let j = 0; j<lpcCoeff.length; j++){
-      errorSignal[i] += tempBuffer[j]*lpcCoeff[j]; // a[0]*x[n] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
+      errorSignal[i] += tBuffer[j]*lpcCoeff[j]; // a[0]*x[n] + a[1]*x[n-1] + a[2]*x[n-2] ... + a[M]*x[n-M]
     }
   }
 
@@ -137,7 +138,7 @@ export function IIRFilter(excitationSignal, lpcCoeff, inOutBuffer){
 
   let M = lpcCoeff.length - 1;
 
-  let y_prev = tempArray;// As many zeros as M;
+  let y_prev = tempArray || [];// As many zeros as M;
   y_prev.splice(0); // Empty array
   for (let i=0; i < M; i++){
     y_prev[i] = 0;
