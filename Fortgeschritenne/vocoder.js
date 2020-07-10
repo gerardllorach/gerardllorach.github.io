@@ -7,7 +7,7 @@
 
 */
 import * as LPC from './LPC.js';
-import * as resample from './resample.js';
+import { Resampler } from './resample.js';
 
 class Vocoder extends AudioWorkletProcessor {
 
@@ -80,11 +80,9 @@ class Vocoder extends AudioWorkletProcessor {
     this._perfectSynthOpt = false;
 
     // resampling before analysis
-    this._resampler = new Resampler(this._frameSize, 1);
     this._resamplingFactor = 1;
-    //this._resampFiltB = [1, 0, 0];
-    //this._resampFiltA = [1, 0, 0];
-    //this.updateResampler(this._resamplingFactor);
+    this._resampler = new Resampler(this._frameSize, this._resamplingFactor);
+
 
     // Synthesis
     // Create impulse signal
@@ -140,7 +138,7 @@ class Vocoder extends AudioWorkletProcessor {
 
     case "resampling":
       this._resamplingFactor = e.data.resampFactor;
-      this._resampler.update(this.resamplingFactor);
+      this._resampler.update(this._resamplingFactor);
       break;
 
     case "voicedThreshold":

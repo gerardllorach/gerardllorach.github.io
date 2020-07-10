@@ -1,9 +1,8 @@
+// Basic resampling class for speech processing
+// Developed by Gerard Llorach and Mattes Ohlenbusch
+// 2020
 
-
-
-
-export class Resampler () {
-
+class Resampler {
 
   constructor(new_framesize, new_factor) {
 
@@ -15,37 +14,42 @@ export class Resampler () {
     this.update(factor);
   }
 
-
-  init(framesize, factor) {
+  init(frameSize, factor) {
     // only happens once
-    this.framesize = framesize;
+
+    this.framesize = frameSize;
     this.resampFactor = factor;
 
-    let this.filterB = [1,0,0];
-    let this.filterA = [1,0,0];
+    this.filterB = [1,0,0];
+    this.filterA = [1,0,0];
 
-    let this.xBuff = [0, 0, 0];
-    let this.yBuff = [0, 0];
+    this.xBuff = [0, 0, 0];
+    this.yBuff = [0, 0];
 
-    let this.filteredBuffer = new Float32Array(this.framesize);
-    let this.resampBuffer = new Float32Array(Math.round(this.framesize * this.resampFactor));
+    this.filteredBuffer = new Float32Array(this.framesize);
+    this.resampBuffer = new Float32Array(Math.round(this.framesize * this.resampFactor));
 
   }
 
 
   clearResampBuffer() {
+
     let newFramesize = Math.round(this.framesize * this.resampFactor);
 
     if (this.resampFactor > 1){
       newFramesize -= 1; // this is a cheap workaround but it doesnt matter so much for LPC analysis, right?
     }
+    console.log(this.framesize);
+    console.log(this.resampFactor);
+    console.log(newFramesize);
     this.resampBuffer = new Float32Array(newFramesize);
   }
 
 
   update(factor) {
     // this function should be called on every change of the resampling factor for the vocal tract length
-    this.clearResampBuffer()
+    this.resampFactor = factor;
+    this.clearResampBuffer();
     this.designAntiAliasLowpass(factor, this._resampFiltB, this._resampFiltA); // B transversal, A recursive coefficients
   }
 
@@ -80,14 +84,20 @@ export class Resampler () {
 
   resampleLinear(inBuffer, origFramesize, resamplingFactor, resamplingBuffer) {
 
-    resampBuffer = resamplingBuffer || this.resampBuffer;
+    this.resampBuffer = resamplingBuffer || this.resampBuffer;
 
     // first filter with biquad lowpass at the new nyquist rate
-    this.filteredBuffer = this.filterBiquad(this._resampFiltB, this._resampFiltA, inBuffer, this.filteredBuffer);
+    this.filteredBuffer = this.filterBiquad(this.filterB, this.filterA, inBuffer, this.filteredBuffer);
 
-    let oldStep=0, l_idx=0, r_idx=0, x_left=0, x_right=0, y_left=0, y_right=0;
+    let oldStep = 0;
+    let l_idx = 0;
+    let r_idx = 0;
+    let x_left = 0;
+    let x_right = 0;
+    let y_left = 0;
+    let y_right = 0;
 
-    for (let x_new=0; x_new<resampBuffer.length; x_new++) {
+    for (let x_new=0; x_new<this.resampBuffer.length; x_new++) {
 
       // new steps are integer indices, old steps are related to this via the inverse resampling factor
       oldStep = x_new / resamplingFactor;
@@ -98,18 +108,18 @@ export class Resampler () {
       r_idx = Math.ceil(oldStep);
 
       if (l_idx === r_idx){
-	resampBuffer[x_new] = filteredBuffer[l_idx];
+	this.resampBuffer[x_new] = this.filteredBuffer[l_idx];
       } else{
 	x_left = l_idx * resamplingFactor;
 	x_right = r_idx * resamplingFactor;
-	y_left = filteredBuffer[l_idx];
-	y_right = filteredBuffer[r_idx];
+	y_left = this.filteredBuffer[l_idx];
+	y_right = this.filteredBuffer[r_idx];
 
-	resampBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
+	this.resampBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
       }
     }
 
-    return resampBuffer;
+    return this.resampBuffer;
   }
 
 
@@ -133,3 +143,5 @@ export class Resampler () {
   }
 
 }
+
+export { Resampler };
