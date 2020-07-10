@@ -377,7 +377,7 @@ class Vocoder extends AudioWorkletProcessor {
 
   LPCprocessing(inBuffer, outBuffer){
 
-    let M = 12;
+    let M = 20;
 
     if (this._resamplingFactor != 1) {
       this._resampBuffer = this.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);

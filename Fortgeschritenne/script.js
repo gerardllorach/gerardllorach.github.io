@@ -40,6 +40,7 @@ startDemo = () => {
   audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
     console.log("Vocoder audioworklet loaded...");
     vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
+    // resampleNode = new AudioWorklet(audioCtx, 'resampler');
 
     // Receive message from AudioWorklet Node
     vocoderNode.port.onmessage = (e) => {
@@ -305,7 +306,9 @@ startDemo = () => {
 
 
   // Visualization
-  function paintWave(inBuffer){
+  function paintWave(inBuffer, inFactor, inColor){
+    let factor = inFactor || 1;
+    let color = inColor || "white";
 
     // Scale of wave
     let stepW = 0.3*canvas.width/inBuffer.length;
@@ -328,10 +331,10 @@ startDemo = () => {
     // Wave signal
     canvasCtx.beginPath();
     canvasCtx.lineWidth = "1";
-    canvasCtx.strokeStyle = "white";
+    canvasCtx.strokeStyle = color;
     canvasCtx.moveTo(0, 0);
     for (let i = 0; i< inBuffer.length; i++){
-      canvasCtx.lineTo(i*stepW, inBuffer[i]*stepH);
+      canvasCtx.lineTo(i*stepW, inBuffer[i]*stepH*factor);
     }
     canvasCtx.stroke();
   }
@@ -345,6 +348,14 @@ startDemo = () => {
     canvasCtx.strokeStyle = "white";
     canvasCtx.arc(0, 0, radius, 0, 2*Math.PI);
     canvasCtx.stroke();
+  }
+
+  function drawText(text, posW, posH, inSize, inColor){
+    let size = inSize || 15;
+    let color = inColor || "white";
+    canvasCtx.fillStyle = color;
+    canvasCtx.font = size + "px Georgia";
+    canvasCtx.fillText(text, posW, posH);
   }
 
 
@@ -369,11 +380,12 @@ startDemo = () => {
     // Paint AudioworkletBuffer
     if (workletBuffer !== null && workletBuffer !== undefined){
       // Plot pairBuffer
-      wposW = 100;
-      wposH = 500;
+      wposW = canvas.width/2 + 0.15*canvas.width;
+      wposH = 700;
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer);
       canvasCtx.translate(-wposW,-wposH);
+      drawText("Buffer odd", wposW, wposH+100);
 
       // Plot oddBuffer
       wposW = canvas.width/2;
@@ -381,6 +393,7 @@ startDemo = () => {
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer2);
       canvasCtx.translate(-wposW,-wposH);
+      drawText("Buffer pair", wposW, wposH+100);
 
       // Plot block
       wposW = canvas.width/2;
@@ -389,20 +402,23 @@ startDemo = () => {
       paintWave(pBlock);
       paintWave(oBlock);
       canvasCtx.translate(-wposW,-wposH);
+      drawText("Blocks (128 samples)", wposW, wposH+100);
 
       // Plot excitationSignal
       wposW = 100;
       wposH = 5*canvas.height/6;
       canvasCtx.translate(wposW,wposH);
-      paintWave(excitationSignal);
+      paintWave(excitationSignal, 10);
       canvasCtx.translate(-wposW,-wposH);
+      drawText("Excitation signal", wposW, wposH+120, 0, "white");
 
-      // Plot excitationSignal
+      // Plot errorSignal
       wposW = 100;
       wposH = 5*canvas.height/6;
       canvasCtx.translate(wposW,wposH);
-      paintWave(errorSignal);
+      paintWave(errorSignal, 10, 'red');
       canvasCtx.translate(-wposW,-wposH);
+      drawText("Error signal", wposW, wposH+100, 0, "red");
 
 
       // Plot LPC coefficients
@@ -413,6 +429,7 @@ startDemo = () => {
         paintWave(lpcCoeff);
         paintWave(lpcCoeff);
         canvasCtx.translate(-wposW,-wposH);
+        drawText("LPC coefficients", wposW, wposH+100);
       }
 
       // Plot tube areas from speech (wakita), page 63
@@ -423,7 +440,7 @@ startDemo = () => {
         let a = [1];
         canvasCtx.fillStyle = "white";
 
-        wposW = canvas.width/4;
+        wposW = 30;
         wposH = canvas.height/3;
         canvasCtx.translate(wposW,wposH);
         // Calculate a
@@ -441,7 +458,7 @@ startDemo = () => {
 
       // Visualize block RMS as circle with varying radius
       if (blockRMS != undefined){
-        wposW = canvas.width/4;
+        wposW = 30;
         wposH = canvas.height/3;
         canvasCtx.translate(wposW,wposH);
         drawRMSCircle(blockRMS);
