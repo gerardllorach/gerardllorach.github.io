@@ -33,7 +33,7 @@ Yet to do
 
 
 ## Todo list
-* Fix excitation signal (error signal and excitation signal are very different)
+* Fix excitation signal (error signal and excitation signal are very different) (Problem with excitation signal comes from high sampling rate (LPC is used to predict high frequency and its not so useful for speech glottal separation).)
 * Discontinuities between pulses
 * Spectral representation (use Web Audio API fft)
 * Manual resampling as Audio Worklet module?
