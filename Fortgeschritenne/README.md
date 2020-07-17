@@ -38,6 +38,7 @@ Yet to do
 * Spectral representation (use Web Audio API fft)
 * 2D interface (age - gender) (requires vibrato and good speech reconstruction quality)
   * Vibrato: sinusoid (vibrato) and noise (jitter). The pitch modulations are not exactly periodic, but not random either.
+  * Add noise in the excitation signal (kind of whispered speech)
 * Manual resampling as Audio Worklet module?
 
 * Write more in the chapters
