@@ -33,6 +33,11 @@ class Vocoder extends AudioWorkletProcessor {
     this._frameSize = Math.max(128*2, this._frameSize); // Force a minimum of two blocks
 
     this._numBlocksInFrame = this._frameSize/128; // 8 at 48kHz and 20ms window
+    // Force an even number of frames
+    if (this._numBlocksInFrame % 2){
+      this._numBlocksInFrame++;
+      this._frameSize += 128;
+    }
     // Predefined 50% overlap
     this._numBlocksOverlap = Math.floor(this._numBlocksInFrame/2); // 4 at 48kHz and 20ms window
 
@@ -57,7 +62,6 @@ class Vocoder extends AudioWorkletProcessor {
 
     console.log("Frame size: " + this._frameSize +
           ". Set frame length: " + this._frameSize/sampleRate + " seconds" +
-          ". Desired frame length: " + frameDuration + " seconds" +
           ". Blocks per frame: " + this._numBlocksInFrame +
           ". Blocks overlap: " + this._numBlocksOverlap);
 
