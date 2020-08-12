@@ -125,6 +125,8 @@ class Vocoder extends AudioWorkletProcessor {
   // Receive messages from main thread
   handleMessage_(e){
 
+    console.log("received message with id: ", e.data.id, "; message was: ", e);
+
     switch (e.data.id) {
 
     case "quantization":
@@ -338,6 +340,8 @@ class Vocoder extends AudioWorkletProcessor {
 
   LPCprocessing(inBuffer, outBuffer){
 
+    console.log("in LPC processing")
+
     let M = 20;
 
     if (this._resamplingFactor != 1) {
@@ -535,8 +539,12 @@ class Vocoder extends AudioWorkletProcessor {
     const input = inputs[0];
     const output = outputs[0];
 
+    console.log("process called");
+
     // return false if no inputs exists (this is specified in the AudioWorkletProcessor interface documentation)
     if (input.length == 0) {
+      console.log("input length is zero");
+      console.log("inputs: ", inputs, "outputs", outputs);
       return false;
     }
 

@@ -38,8 +38,8 @@ startDemo = () => {
   // Create and load AudioWorklet node
   let vocoderNode = null;
   audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
-    console.log("Vocoder audioworklet loaded...");
     vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
+    console.log("Vocoder audioworklet loaded...");
     // resampleNode = new AudioWorklet(audioCtx, 'resampler');
 
     // Receive message from AudioWorklet Node
@@ -52,7 +52,7 @@ startDemo = () => {
         oBlock = e.data.oddBlock;
         lpcCoeff = e.data.lpcCoeff;
         kCoeff = e.data.kCoeff;
-	      blockRMS = e.data.blockRMS;
+	blockRMS = e.data.blockRMS;
         excitationSignal = e.data.excitationSignal;
         errorSignal = e.data.errorSignal;
       }
@@ -62,10 +62,7 @@ startDemo = () => {
         console.log(e.data);
       }
     };
-  });//.catch(e => {
-    //console.log(e);
-  //});
-
+  });
 
 
 
@@ -116,7 +113,7 @@ startDemo = () => {
   let yMouse = 0;
   let mouseState = 0;
   canvas.onmousemove = (e) => {
-    xMouse = e.clientX; 
+    xMouse = e.clientX;
     yMouse = e.clientY;
     mouseState = e.buttons; // 1 left, 2 right
   };
@@ -306,7 +303,6 @@ startDemo = () => {
       connect_fileSource();
     }
   }
-
 
   function disconnect_all(){
     streamSource.disconnect();
@@ -521,7 +517,7 @@ startDemo = () => {
     var ySel = -padSelY*sizeR;
     //drawCircle(-sizeR/2, -sizeR/2);
     drawCircle(xSel, ySel);
-    
+
     // Text
     drawText("Child", -sizeR -15, 20, undefined, 10);
     drawText("Old", 0, -sizeR -10, undefined, 10);
@@ -547,7 +543,7 @@ startDemo = () => {
       } else
         drawCircle(xMouse, yMouse);
     }
-      
+
 
 
     requestAnimationFrame(draw);
