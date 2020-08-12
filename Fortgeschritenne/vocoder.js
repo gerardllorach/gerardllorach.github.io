@@ -228,6 +228,61 @@ class Vocoder extends AudioWorkletProcessor {
     return this._excitationSignal;
   }
 
+  createErrorBasedExcitation(errorBuffer, periodSamples, errorRMS) {
+
+    // pick a period of the error signal:
+    // 1. find first peak
+    let periodBuffer = errorBuffer.slice(0, periodSamples-1);
+    let maxIdx = periodBuffer.indexOf(Math.max(...periodBuffer));
+
+    console.log("maxidx:"+maxIdx)
+
+    // 2. write a period [..... Peak ....] with peak at the middle to buffer
+    let startIdx = maxIdx + Math.round(periodSamples / 2); // actually, we take the second period
+    for (let i=0; i<periodBuffer.length; i++){
+      periodBuffer[i] = errorBuffer[startIdx+i];
+    }
+
+    // assemble new excitation with modifiers
+    // first put old half, then zeros
+    for (let i=0; i<this._frameSize/2; i++) {
+      this._excitationSignal[i] = this._oldTonalBuffer[i];
+    }
+
+    // index for offset computation
+    let lastIndex = 0;
+    let halfPeriod = Math.round(periodSamples / 2);
+
+    console.log(this._pulseOffset);
+
+    // now fill with error periods
+    for (let p_start_idx=this._pulseOffset; p_start_idx<this._frameSize; p_start_idx+=periodSamples){
+      for (let i=0; i<periodSamples; i++) {
+	this._excitationSignal[p_start_idx+i] = periodBuffer[i];
+      }
+      lastIndex = p_start_idx;
+
+    }
+    // new offset (should be an index of the second half of the block)
+    this._pulseOffset = lastIndex - this._frameSize/2 + periodSamples;
+
+    // save second half for next block
+    for (let i=0; i<this._frameSize/2; i++){
+      this._oldTonalBuffer[i] = this._excitationSignal[i+this._frameSize/2];
+    }
+    // compute RMS of excitation
+    this._excitationSignalRMS = this.blockRMS(this._excitationSignal);
+    let scaleFactor = errorRMS / this._excitationSignalRMS;
+
+    // scale each impulse to desired RMS
+    for (let i=0; i<this._frameSize; i++){
+      this._excitationSignal[i] = this._excitationSignal[i] * scaleFactor;
+    }
+
+    return this._excitationSignal;
+
+  }
+
 
   // Fill buffers
   processBlock(outBlock, inputBlock) {
@@ -320,7 +375,8 @@ class Vocoder extends AudioWorkletProcessor {
 
     // decide whether to use periodic or noise excitation for the synthesis
     if (this._tonalConfidence > this._confidenceTonalThreshold) {
-      this.createTonalExcitation(periodSamples, this._rms);
+      //this.createTonalExcitation(periodSamples, this._rms);
+      this.createErrorBasedExcitation(this._errorBuffer, periodSamples, this._rms);
     } else {
       this.createNoiseExcitation(this._rms);
     } // both write on this._excitationSignal

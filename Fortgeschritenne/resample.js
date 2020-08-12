@@ -39,9 +39,6 @@ class Resampler {
     if (this.resampFactor > 1){
       newFramesize -= 1; // this is a cheap workaround but it doesnt matter so much for LPC analysis, right?
     }
-    console.log(this.framesize);
-    console.log(this.resampFactor);
-    console.log(newFramesize);
     this.resampBuffer = new Float32Array(newFramesize);
   }
 
