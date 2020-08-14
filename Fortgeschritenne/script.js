@@ -217,8 +217,6 @@ startDemo = () => {
     // Show/Hide HTML vocoder options
     if (vocoderButton.checked){
 
-      vocoderNode = make_new_vocoder_node();
-
       // Unhide vocoder HTML elements
       quantButton.parentElement.hidden = false;
       reverseKButton.parentElement.hidden = false;
@@ -316,6 +314,7 @@ startDemo = () => {
     console.log("connecting the stream audio source...");
     if (vocoderButton.checked) {
       console.log("with vocoder");
+      vocoderNode = make_new_vocoder_node();
       streamSource.connect(vocoderNode).connect(analyser).connect(audioCtx.destination);
       console.log(vocoderNode);
     } else {
@@ -327,6 +326,7 @@ startDemo = () => {
   function connect_fileSource(){
     console.log("connecting the file audio source...");
     if (vocoderButton.checked) {
+      vocoderNode = make_new_vocoder_node();
       console.log("with vocoder");
       soundSource.connect(vocoderNode).connect(analyser).connect(audioCtx.destination);
     } else {
