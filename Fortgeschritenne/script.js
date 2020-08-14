@@ -7,6 +7,7 @@ startDemo = () => {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   //const audioCtx = new AudioContext({sampleRate:12000});
   const audioCtx = new AudioContext();
+  audioCtx.suspend();
 
   // AudioContext nodes
   // Analyser node - Gets the wave buffer (and fft) on the main thread
@@ -68,7 +69,6 @@ startDemo = () => {
 
   // App control variables
   let playing = false;
-
 
 
   // Variables for displaying information on canvas
@@ -278,21 +278,21 @@ startDemo = () => {
 
   function connect_streamSource(){
     if (vocoderButton.checked) {
-      streamSource.connect(vocoderNode).connect(audioCtx.destination);
-      streamSource.connect(vocoderNode).connect(analyser);
+      streamSource.connect(vocoderNode).connect(analyser).connect(audioCtx.destination);
+      //streamSource.connect(vocoderNode).connect(analyser);
     } else {
-      streamSource.connect(audioCtx.destination);
-      streamSource.connect(analyser);
+      soundSource.connect(analyser).connect(audioCtx.destination);
+      //soundSource.connect(analyser);
     }
   }
 
   function connect_fileSource(){
     if (vocoderButton.checked) {
-      soundSource.connect(vocoderNode).connect(audioCtx.destination);
-      soundSource.connect(vocoderNode).connect(analyser);
+      soundSource.connect(vocoderNode).connect(analyser).connect(audioCtx.destination);
+      //soundSource.connect(vocoderNode).connect(analyser);
     } else {
-      soundSource.connect(audioCtx.destination);
-      soundSource.connect(analyser);
+      soundSource.connect(analyser).connect(audioCtx.destination);
+      //soundSource.connect(analyser);
     }
   }
 
@@ -305,9 +305,11 @@ startDemo = () => {
   }
 
   function disconnect_all(){
-    streamSource.disconnect();
+    //streamSource.disconnect();
     soundSource.disconnect();
     vocoderNode.disconnect();
+    //analyser.disconnect();
+    audioCtx.suspend();
   }
 
 
