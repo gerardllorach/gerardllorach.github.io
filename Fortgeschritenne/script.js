@@ -8,6 +8,7 @@ startDemo = () => {
   //const audioCtx = new AudioContext({sampleRate:12000});
   const audioCtx = new AudioContext();
   audioCtx.suspend();
+  console.log("starting audiocontext as suspended")
 
   // AudioContext nodes
   // Analyser node - Gets the wave buffer (and fft) on the main thread
@@ -41,7 +42,6 @@ startDemo = () => {
   audioCtx.audioWorklet.addModule('vocoder.js').then(() => {
     vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
     console.log("Vocoder audioworklet loaded...");
-    // resampleNode = new AudioWorklet(audioCtx, 'resampler');
 
     // Receive message from AudioWorklet Node
     vocoderNode.port.onmessage = (e) => {
@@ -65,6 +65,33 @@ startDemo = () => {
     };
   });
 
+  function make_new_vocoder_node(){
+
+    vocoderNode = new AudioWorkletNode(audioCtx, 'vocoder');
+    console.log("Vocoder audioworklet loaded...");
+
+    // Receive message from AudioWorklet Node
+    vocoderNode.port.onmessage = (e) => {
+      // Get information at every frame
+      if (e.data.buffer !== undefined){
+        workletBuffer = e.data.buffer;
+        workletBuffer2 = e.data.bufferPair;
+        pBlock = e.data.pairBlock;
+        oBlock = e.data.oddBlock;
+        lpcCoeff = e.data.lpcCoeff;
+        kCoeff = e.data.kCoeff;
+	blockRMS = e.data.blockRMS;
+        excitationSignal = e.data.excitationSignal;
+        errorSignal = e.data.errorSignal;
+      }
+      tractStretch = e.data.tractStretch;
+      // Get information every second
+      if (e.data.message == 'Update'){
+        console.log(e.data);
+      }
+    };
+    return vocoderNode;
+  }
 
 
   // App control variables
@@ -132,23 +159,26 @@ startDemo = () => {
     if (!playing) {
       // check if context is in suspended state (autoplay policy)
       if (audioCtx.state === 'suspended') {
+	console.log("resuming audio context");
         audioCtx.resume();
       }
 
       soundSource = audioCtx.createBufferSource();
       soundSource.buffer = soundBuffer[selectAudioList.value];
+
       connect_source();
 
       // Loop?
       if (loopAudioButton.checked)
       	soundSource.loop = true;
 
-
       soundSource.start();
       console.log('start');
       playing = true;
       playButton.innerText = 'Pause Sound';
     } else {
+
+      audioCtx.suspend();
       soundSource.stop();
       console.log('stop')
       playing = false;
@@ -162,7 +192,6 @@ startDemo = () => {
   // Switch microphone/file input
   inputButton.onclick = () => {
 
-    disconnect_all();
 
     if (inputButton.checked) {
       // hide list of audio
@@ -176,6 +205,7 @@ startDemo = () => {
       //soundSource.buffer = soundBuffer[selectAudioList.value];
     }
     if (playing){
+      disconnect_all();
       connect_source();
     }
 
@@ -183,8 +213,12 @@ startDemo = () => {
 
 
   vocoderButton.onclick = () => {
+
     // Show/Hide HTML vocoder options
     if (vocoderButton.checked){
+
+      vocoderNode = make_new_vocoder_node();
+
       // Unhide vocoder HTML elements
       quantButton.parentElement.hidden = false;
       reverseKButton.parentElement.hidden = false;
@@ -198,10 +232,12 @@ startDemo = () => {
       perfectSButton.parentElement.hidden = true;
       tractLengthSlider.parentElement.hidden = true;
       voicedThresSlider.parentElement.hidden = true;
+
+      vocoderNode.disconnect();
     }
     // Create audio connections
-    disconnect_all();
     if (playing){
+      disconnect_all();
       connect_source();
     }
   }
@@ -277,26 +313,30 @@ startDemo = () => {
 
 
   function connect_streamSource(){
+    console.log("connecting the stream audio source...");
     if (vocoderButton.checked) {
+      console.log("with vocoder");
       streamSource.connect(vocoderNode).connect(analyser).connect(audioCtx.destination);
-      //streamSource.connect(vocoderNode).connect(analyser);
+      console.log(vocoderNode);
     } else {
-      soundSource.connect(analyser).connect(audioCtx.destination);
-      //soundSource.connect(analyser);
+      console.log("without vocoder");
+      streamSource.connect(analyser).connect(audioCtx.destination);
     }
   }
 
   function connect_fileSource(){
+    console.log("connecting the file audio source...");
     if (vocoderButton.checked) {
+      console.log("with vocoder");
       soundSource.connect(vocoderNode).connect(analyser).connect(audioCtx.destination);
-      //soundSource.connect(vocoderNode).connect(analyser);
     } else {
+      console.log("without vocoder");
       soundSource.connect(analyser).connect(audioCtx.destination);
-      //soundSource.connect(analyser);
     }
   }
 
   function connect_source(){
+    console.log("connect_source called with audio context state: ", audioCtx.state);
     if (inputButton.checked){
       connect_streamSource();
     } else {
@@ -305,11 +345,10 @@ startDemo = () => {
   }
 
   function disconnect_all(){
-    //streamSource.disconnect();
+    console.log("disconnecting soundSource and analyser");
+    streamSource.disconnect();
     soundSource.disconnect();
-    vocoderNode.disconnect();
-    //analyser.disconnect();
-    audioCtx.suspend();
+    analyser.disconnect();
   }
 
 

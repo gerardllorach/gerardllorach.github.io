@@ -69,6 +69,7 @@ class Vocoder extends AudioWorkletProcessor {
 
 
     // LCP variables
+    this._lpcOrder = 20;
     // LPC filter coefficients
     this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // LPC k coefficients
@@ -340,17 +341,14 @@ class Vocoder extends AudioWorkletProcessor {
 
   LPCprocessing(inBuffer, outBuffer){
 
-    console.log("in LPC processing")
-
-    let M = 20;
 
     if (this._resamplingFactor != 1) {
       this._resampler.resampBuffer = this._resampler.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);
-      LPC.calculateLPC(this._resampler.resampBuffer, M, this._lpcCoeff, this._kCoeff);
+      LPC.calculateLPC(this._resampler.resampBuffer, this._lpcOrder, this._lpcCoeff, this._kCoeff);
     } else {
       // Getting the a coefficients and k coefficients
       // The a coefficients are used for the filter
-      LPC.calculateLPC(inBuffer, M, this._lpcCoeff, this._kCoeff);
+      LPC.calculateLPC(inBuffer, this._lpcOrder, this._lpcCoeff, this._kCoeff);
     }
 
     // Calculate error signal
@@ -379,8 +377,8 @@ class Vocoder extends AudioWorkletProcessor {
 
     // decide whether to use periodic or noise excitation for the synthesis
     if (this._tonalConfidence > this._confidenceTonalThreshold) {
-      //this.createTonalExcitation(periodSamples, this._rms);
-      this.createErrorBasedExcitation(this._errorBuffer, periodSamples, this._rms);
+      this.createTonalExcitation(periodSamples, this._rms);
+      //this.createErrorBasedExcitation(this._errorBuffer, periodSamples, this._rms);
     } else {
       this.createNoiseExcitation(this._rms);
     } // both write on this._excitationSignal
@@ -539,12 +537,9 @@ class Vocoder extends AudioWorkletProcessor {
     const input = inputs[0];
     const output = outputs[0];
 
-    console.log("process called");
-
     // return false if no inputs exists (this is specified in the AudioWorkletProcessor interface documentation)
     if (input.length == 0) {
-      console.log("input length is zero");
-      console.log("inputs: ", inputs, "outputs", outputs);
+      console.log("input length is zero! no processing possible.");
       return false;
     }
 
@@ -601,7 +596,7 @@ class Vocoder extends AudioWorkletProcessor {
         fundamentalFrequencyHz: this._fundFreq,
         tractStretch: this._resamplingFactor,
         tonalConfidence: this._tonalConfidence,
-		    excitationSignal: this._excitationSignal,
+	excitationSignal: this._excitationSignal,
         errorSignal: this._errorBuffer,
       });
       this._lastUpdate = currentTime;
