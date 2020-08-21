@@ -33,6 +33,11 @@ class Vocoder extends AudioWorkletProcessor {
     this._frameSize = Math.max(128*2, this._frameSize); // Force a minimum of two blocks
 
     this._numBlocksInFrame = this._frameSize/128; // 8 at 48kHz and 20ms window
+    // Force an even number of frames
+    if (this._numBlocksInFrame % 2){
+      this._numBlocksInFrame++;
+      this._frameSize += 128;
+    }
     // Predefined 50% overlap
     this._numBlocksOverlap = Math.floor(this._numBlocksInFrame/2); // 4 at 48kHz and 20ms window
 
@@ -57,7 +62,6 @@ class Vocoder extends AudioWorkletProcessor {
 
     console.log("Frame size: " + this._frameSize +
           ". Set frame length: " + this._frameSize/sampleRate + " seconds" +
-          ". Desired frame length: " + frameDuration + " seconds" +
           ". Blocks per frame: " + this._numBlocksInFrame +
           ". Blocks overlap: " + this._numBlocksOverlap);
 
@@ -65,6 +69,7 @@ class Vocoder extends AudioWorkletProcessor {
 
 
     // LCP variables
+    this._lpcOrder = 20;
     // LPC filter coefficients
     this._lpcCoeff = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // LPC k coefficients
@@ -120,6 +125,8 @@ class Vocoder extends AudioWorkletProcessor {
 
   // Receive messages from main thread
   handleMessage_(e){
+
+    console.log("received message with id: ", e.data.id, "; message was: ", e);
 
     switch (e.data.id) {
 
@@ -224,6 +231,61 @@ class Vocoder extends AudioWorkletProcessor {
     return this._excitationSignal;
   }
 
+  createErrorBasedExcitation(errorBuffer, periodSamples, errorRMS) {
+
+    // pick a period of the error signal:
+    // 1. find first peak
+    let periodBuffer = errorBuffer.slice(0, periodSamples-1);
+    let maxIdx = periodBuffer.indexOf(Math.max(...periodBuffer));
+
+    console.log("maxidx:"+maxIdx)
+
+    // 2. write a period [..... Peak ....] with peak at the middle to buffer
+    let startIdx = maxIdx + Math.round(periodSamples / 2); // actually, we take the second period
+    for (let i=0; i<periodBuffer.length; i++){
+      periodBuffer[i] = errorBuffer[startIdx+i];
+    }
+
+    // assemble new excitation with modifiers
+    // first put old half, then zeros
+    for (let i=0; i<this._frameSize/2; i++) {
+      this._excitationSignal[i] = this._oldTonalBuffer[i];
+    }
+
+    // index for offset computation
+    let lastIndex = 0;
+    let halfPeriod = Math.round(periodSamples / 2);
+
+    console.log(this._pulseOffset);
+
+    // now fill with error periods
+    for (let p_start_idx=this._pulseOffset; p_start_idx<this._frameSize; p_start_idx+=periodSamples){
+      for (let i=0; i<periodSamples; i++) {
+	this._excitationSignal[p_start_idx+i] = periodBuffer[i];
+      }
+      lastIndex = p_start_idx;
+
+    }
+    // new offset (should be an index of the second half of the block)
+    this._pulseOffset = lastIndex - this._frameSize/2 + periodSamples;
+
+    // save second half for next block
+    for (let i=0; i<this._frameSize/2; i++){
+      this._oldTonalBuffer[i] = this._excitationSignal[i+this._frameSize/2];
+    }
+    // compute RMS of excitation
+    this._excitationSignalRMS = this.blockRMS(this._excitationSignal);
+    let scaleFactor = errorRMS / this._excitationSignalRMS;
+
+    // scale each impulse to desired RMS
+    for (let i=0; i<this._frameSize; i++){
+      this._excitationSignal[i] = this._excitationSignal[i] * scaleFactor;
+    }
+
+    return this._excitationSignal;
+
+  }
+
 
   // Fill buffers
   processBlock(outBlock, inputBlock) {
@@ -279,15 +341,14 @@ class Vocoder extends AudioWorkletProcessor {
 
   LPCprocessing(inBuffer, outBuffer){
 
-    let M = 20;
 
     if (this._resamplingFactor != 1) {
       this._resampler.resampBuffer = this._resampler.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);
-      LPC.calculateLPC(this._resampler.resampBuffer, M, this._lpcCoeff, this._kCoeff);
+      LPC.calculateLPC(this._resampler.resampBuffer, this._lpcOrder, this._lpcCoeff, this._kCoeff);
     } else {
       // Getting the a coefficients and k coefficients
       // The a coefficients are used for the filter
-      LPC.calculateLPC(inBuffer, M, this._lpcCoeff, this._kCoeff);
+      LPC.calculateLPC(inBuffer, this._lpcOrder, this._lpcCoeff, this._kCoeff);
     }
 
     // Calculate error signal
@@ -317,6 +378,7 @@ class Vocoder extends AudioWorkletProcessor {
     // decide whether to use periodic or noise excitation for the synthesis
     if (this._tonalConfidence > this._confidenceTonalThreshold) {
       this.createTonalExcitation(periodSamples, this._rms);
+      //this.createErrorBasedExcitation(this._errorBuffer, periodSamples, this._rms);
     } else {
       this.createNoiseExcitation(this._rms);
     } // both write on this._excitationSignal
@@ -477,6 +539,7 @@ class Vocoder extends AudioWorkletProcessor {
 
     // return false if no inputs exists (this is specified in the AudioWorkletProcessor interface documentation)
     if (input.length == 0) {
+      console.log("input length is zero! no processing possible.");
       return false;
     }
 
@@ -533,7 +596,7 @@ class Vocoder extends AudioWorkletProcessor {
         fundamentalFrequencyHz: this._fundFreq,
         tractStretch: this._resamplingFactor,
         tonalConfidence: this._tonalConfidence,
-		    excitationSignal: this._excitationSignal,
+	excitationSignal: this._excitationSignal,
         errorSignal: this._errorBuffer,
       });
       this._lastUpdate = currentTime;
