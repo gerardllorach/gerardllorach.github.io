@@ -542,8 +542,9 @@ startDemo = () => {
       wposH = 5*canvas.height/6;
 
       analyser.getByteFrequencyData(analyseArray);
+
       if (analyseArray != undefined){
-      canvasCtx.translate(wposW,wposH);
+	canvasCtx.translate(wposW,wposH);
 	for(var i = 0; i < analyseArray.length; i++) {
 	  barHeight = analyseArray[i]/2;
 
