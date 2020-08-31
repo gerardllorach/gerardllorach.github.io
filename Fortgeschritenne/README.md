@@ -42,3 +42,4 @@ Yet to do
 * Manual resampling as Audio Worklet module?
 
 * Write more in the chapters
+* where to put [This part?](docs/speech_production_model.md)

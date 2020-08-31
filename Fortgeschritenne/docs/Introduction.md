@@ -7,3 +7,7 @@ Sadly, there are not many demos working with the AudioWorklet (at least I could 
 
 ### Requirements for the AudioWorklet
 One of the requirements of the AudioWorklet is that the website has to be provided by an HTTPS server. Initially I created a nodejs server with self-signed certificates to run locally. But I later discovered that github provides HTTPS out of the box and thus switched to this platform to develop the application. Another requirement for the AudioWorklet is that the code has to be written in a different .js file, which is loaded from the main javascript thread.
+
+### Structure of the software 
+The general visual composition is defined in `index.html`, where individual interactive elements are defined. Their functionality is largely implemented in `script.js`, as well as routines for visualization of parts of the processing scheme. Computations required for linear prediction analysis and synthesis of speech are contained within `LPC.js`. This is utilized in an instance of the AudioWorklet implementation of `vocoder.js`, which makes use of the WebAudio interface. Some voice transformations require resampling operations, which are contained in `resample.js`.
+The speech processing is carried out on a frame basis in an overlap-add scheme.

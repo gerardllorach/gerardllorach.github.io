@@ -5,8 +5,8 @@ console.log("v0.20");
 startDemo = () => {
   // Start AudioContext
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  //const audioCtx = new AudioContext({sampleRate:12000});
-  const audioCtx = new AudioContext();
+  const audioCtx = new AudioContext({sampleRate:12000});
+  //const audioCtx = new AudioContext();
   audioCtx.suspend();
   console.log("starting audiocontext as suspended")
 
@@ -15,6 +15,8 @@ startDemo = () => {
   const analyser = audioCtx.createAnalyser();
   analyser.smoothingTimeConstant = 0.0;
   analyser.fftSize = 2048;
+  let analyseArray = new Uint8Array(analyser.frequencyBinCount);
+
   // Sound source node (buffer source)
   let soundSource;
   let streamSource;
@@ -530,6 +532,31 @@ startDemo = () => {
         canvasCtx.translate(-wposW,-wposH);
       }
 
+
+      // Plot fft bars
+      var maxHeight = 250;
+      var barWidth = (canvas.width/3) / analyseArray.length;
+      var barHeight;
+      var x = 0;
+      wposW = canvas.width/2;
+      wposH = 5*canvas.height/6;
+
+      analyser.getByteFrequencyData(analyseArray);
+
+      if (analyseArray != undefined){
+	canvasCtx.translate(wposW,wposH);
+	for(var i = 0; i < analyseArray.length; i++) {
+	  barHeight = analyseArray[i]/2;
+
+	  canvasCtx.fillStyle = 'rgb(' + (barHeight+maxHeight) + ',50,50)';
+	  canvasCtx.fillRect(x,100-barHeight/2,barWidth,barHeight);
+
+	  x += barWidth;
+	}
+	canvasCtx.translate(-wposW,-wposH);
+	drawText("Magnitude spectrum (dB)", wposW, wposH+0.7*maxHeight, 0, "red");
+
+      }
     }
     // Instructions for drag and drop
     canvasCtx.fillStyle = "white";
