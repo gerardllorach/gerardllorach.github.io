@@ -397,7 +397,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Pitch modifications
     // Modify fundamental frequency
     this._fundFreq = this._fundFreq * this._pitchFactor;
-    periodSamples = sampleRate / this._fundFreq;
+    periodSamples = Math.round(sampleRate / this._fundFreq);
 
 
     // decide whether to use periodic or noise excitation for the synthesis

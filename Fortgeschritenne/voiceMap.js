@@ -86,10 +86,14 @@ function voiceTransformations(x,y){
   // Modify pitch and vocal tract factor
   // Distance from diagonal (ddD): 1 to 0 for Female, 0 to -1 for Male)
   // TODO: alternative: use Axis instead of Diagonal (this way we can get Female100% and Old100%)
-  if (ddD > 0)
+  if (ddD > 0){
     vocalTractFactor = vocalTractFactor / (ddD + 1); // Divided by two
-  else
+    pitchFactor *= ddD*0.5 + 1; // Multiplied by 1.5
+  }
+  else{
     vocalTractFactor = vocalTractFactor * (Math.abs(ddD) + 1); // Multiplied by two
+    pitchFactor /= Math.abs(ddD)*0.5 + 1; // Divided by 1.5
+  }
   
   // Old
   // Add vibrato

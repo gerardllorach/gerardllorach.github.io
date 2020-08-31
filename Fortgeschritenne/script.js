@@ -538,20 +538,21 @@ startDemo = () => {
       analyser.getByteFrequencyData(analyseArray);
 
       if (analyseArray != undefined){
-	canvasCtx.translate(wposW,wposH);
-	for(var i = 0; i < analyseArray.length; i++) {
-	  barHeight = analyseArray[i]/2;
+        canvasCtx.translate(wposW,wposH);
+        for(var i = 0; i < analyseArray.length; i++) {
+          barHeight = analyseArray[i]/2;
 
-	  canvasCtx.fillStyle = 'rgb(' + (barHeight+maxHeight) + ',50,50)';
-	  canvasCtx.fillRect(x,100-barHeight/2,barWidth,barHeight);
+          canvasCtx.fillStyle = 'rgb(' + (barHeight+maxHeight) + ',50,50)';
+          canvasCtx.fillRect(x,100-barHeight/2,barWidth,barHeight);
 
-	  x += barWidth;
-	}
-	canvasCtx.translate(-wposW,-wposH);
-	drawText("Magnitude spectrum (dB)", wposW, wposH+0.7*maxHeight, 0, "red");
+          x += barWidth;
+        }
+        canvasCtx.translate(-wposW,-wposH);
+        drawText("Magnitude spectrum (dB)", wposW, wposH+0.7*maxHeight, 0, "red");
 
       }
     }
+    
     // Instructions for drag and drop
     canvasCtx.fillStyle = "white";
     canvasCtx.font = "20px Georgia";
