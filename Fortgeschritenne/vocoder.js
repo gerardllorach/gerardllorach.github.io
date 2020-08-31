@@ -18,7 +18,7 @@ class Vocoder extends AudioWorkletProcessor {
     // Initialize parameters
     this.init(0.02);
     // Process message
-    this.port.onmessage = this.handleMessage_.bind(this);
+    this.port.onmessage = this.handleMessage.bind(this);
   }
 
   // input: Frame duration in seconds
@@ -87,6 +87,11 @@ class Vocoder extends AudioWorkletProcessor {
     // resampling before analysis
     this._resamplingFactor = 1;
     this._resampler = new Resampler(this._frameSize, this._resamplingFactor);
+    // Pitch factor (modifies this._fundFreq)
+    this._pitchFactor = 1;
+    // Vibrato effect (modifies this._fundFreq)
+    this._vibratoEffect = 0;
+
 
 
     // Synthesis
@@ -124,7 +129,7 @@ class Vocoder extends AudioWorkletProcessor {
 
 
   // Receive messages from main thread
-  handleMessage_(e){
+  handleMessage(e){
 
     console.log("received message with id: ", e.data.id, "; message was: ", e);
 
@@ -152,9 +157,23 @@ class Vocoder extends AudioWorkletProcessor {
       this._confidenceTonalThreshold = e.data.voicedThreshold;
       break;
 
+    case "voiceMap":
+      // Voiced / Unvoiced Synthesis
+      this._confidenceTonalThreshold = e.data.voicedThreshold;
+      // Resampling (vocal tract length)
+      if (e.data.vocalTractFactor != this._resamplingFactor){
+        this._resamplingFactor = e.data.vocalTractFactor;
+        this._resampler.update(this._resamplingFactor);
+      }
+      // Pitch modifier
+      this._pitchFactor = e.data.pitchFactor;
+      // Vibrato
+      //e.data.vibratoEffect;
+      break;
+
     default: // any unknown ID: log the message ID
       console.log("unknown message received:")
-      console.log(e.data.id)
+      console.log(e.data)
     }
   }
 
@@ -374,6 +393,12 @@ class Vocoder extends AudioWorkletProcessor {
     let periodSamples = Math.round(this._periodFactor * this.autocorrPeriod(inBuffer));
 
     this._fundFreq = sampleRate / periodSamples;
+
+    // Pitch modifications
+    // Modify fundamental frequency
+    this._fundFreq = this._fundFreq * this._pitchFactor;
+    periodSamples = sampleRate / this._fundFreq;
+
 
     // decide whether to use periodic or noise excitation for the synthesis
     if (this._tonalConfidence > this._confidenceTonalThreshold) {

@@ -104,10 +104,9 @@ export function recalculateLPC(lpcCoeff, kCoeff){
 // Calculate error signal
 export function calculateErrorSignal(inBuffer, lpcCoeff, inErrorSignal){
 
-  let errorSignal = inErrorSignal || new Float32Array(inBuffer.length);
-  errorSignal.fill(0); // Reset errorBuffer
+	let errorSignal = inErrorSignal || new Float32Array(inBuffer.length);
+	errorSignal.fill(0); // Reset erroBuffer
 
-  // init  memory for recursive filter coefficients (these values are previous outputs)
   let tBuffer = tempBuffer || [];
   tBuffer.splice(0);
   for (let j = 0; j<lpcCoeff.length; j++){
