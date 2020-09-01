@@ -560,10 +560,11 @@ startDemo = () => {
 
 
     // Draw 2D interface (Voice Map)
-    var paramsVoice = voiceMap.voiceMapUpdate(canvas, canvasCtx, xMouse, yMouse, mouseState);
-    if (paramsVoice !== undefined){
-      //console.log(paramsVoice);
-      vocoderNode.port.postMessage(paramsVoice);
+    if (vocoderButton.checked) {
+      var paramsVoice = voiceMap.voiceMapUpdate(canvas, canvasCtx, xMouse, yMouse, mouseState);
+      if (paramsVoice !== undefined){
+        vocoderNode.port.postMessage(paramsVoice);
+      }
     }
 
 
