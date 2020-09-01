@@ -13,7 +13,7 @@ Hint: Drag and drop audio files (.wav and .mp3) at the bottom of the webpage to 
 #### [Introduction to the Web Audio API](docs/Introduction.md)
 An introduction to the Web Audio API and AudioWorklets.
 
-#### [Introduction to the the speech production model](docs/speech_production_model.md)
+#### [Introduction to the speech production model](docs/speech_production_model.md)
 An introduction to the speech production model and linear predictive coding (LPC).
 
 #### [Chapter 1. Overlap and add](docs/Chapter%201.%20Overlap%20and%20add.md)
