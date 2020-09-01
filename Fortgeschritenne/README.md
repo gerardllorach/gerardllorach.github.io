@@ -13,6 +13,9 @@ Hint: Drag and drop audio files (.wav and .mp3) at the bottom of the webpage to 
 #### [Introduction to the Web Audio API](docs/Introduction.md)
 An introduction to the Web Audio API and AudioWorklets.
 
+#### [Introduction to the the speech production model](docs/speech_production_model.md)
+An introduction to the speech production model and linear predictive coding (LPC).
+
 #### [Chapter 1. Overlap and add](docs/Chapter%201.%20Overlap%20and%20add.md)
 Audio blocks, buffers and frames with the Web Audio API.
 
@@ -28,7 +31,10 @@ Transformation of K coefficients (PARCOR coeff) and vocal tract length modificat
 #### [Chapter 5. Web interface](docs/Chapter%205.%20Web%20interface.md)
 Canvas HTML, microphone input, drag and drop of audio files.
 
-#### Chapter 6. Visualization
+#### [Chapter 6. Voice map](docs/Chapter%206.%20Voice%20map.md)
+2D interface for voice transformations (gender and age).
+
+#### Chapter 7. Visualization
 Yet to do
 
 
@@ -38,8 +44,6 @@ Yet to do
 * Spectral representation (use Web Audio API fft)
 * 2D interface (age - gender) (requires vibrato and good speech reconstruction quality)
   * Vibrato: sinusoid (vibrato) and noise (jitter). The pitch modulations are not exactly periodic, but not random either.
-  * Add noise in the excitation signal (kind of whispered speech)
 * Manual resampling as Audio Worklet module?
 
 * Write more in the chapters
-* where to put [This part?](docs/speech_production_model.md)
