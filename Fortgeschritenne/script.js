@@ -155,8 +155,6 @@ startDemo = () => {
 
   let padSelX = 0.5;
   let padSelY = 0.5;
-  let prevVocalTractFactor = 1;
-
 
 
 
@@ -502,7 +500,7 @@ startDemo = () => {
         canvasCtx.fillStyle = "white";
 
         wposW = 30;
-        wposH = canvas.height/3;
+        wposH = canvas.height/5;
         canvasCtx.translate(wposW,wposH);
         // Calculate a
         for (let i = 1; i<kCoeff.length; i++){
@@ -520,7 +518,7 @@ startDemo = () => {
       // Visualize block RMS as circle with varying radius
       if (blockRMS != undefined){
         wposW = 30;
-        wposH = canvas.height/3;
+        wposH = canvas.height/5;
         canvasCtx.translate(wposW,wposH);
         drawRMSCircle(blockRMS);
         canvasCtx.translate(-wposW,-wposH);
@@ -552,7 +550,7 @@ startDemo = () => {
 
       }
     }
-    
+
     // Instructions for drag and drop
     canvasCtx.fillStyle = "white";
     canvasCtx.font = "20px Georgia";
