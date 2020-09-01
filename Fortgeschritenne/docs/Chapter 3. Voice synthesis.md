@@ -27,7 +27,13 @@ for (let shift = this._lowerACFBound; shift<this._upperACFBound; shift++){
 }
 let maxIdx = this._lowerACFBound + this._fundPeriodBuffer.indexOf(Math.max(...this._fundPeriodBuffer));
 ```
-Note that only the relevant values of the autocorrelation function need to be computed. In javascript, the `...` denotes the spread operator. This operation is necessary because the `Math.max()` function does not generalize to array type variables as well as in higher-level languages such as Matlab or Python, which natively support array operations. The expression `Math.max(...acfBuff)` is then equivalent to `Math.max(acfBuff[0], acfBuff[1], acfBuff[2] /*and so on*/)`. 
+Note that only the relevant values of the autocorrelation function need to be computed. In javascript, the `...` denotes the spread operator. This operation is necessary because the `Math.max()` function does not generalize to array type variables as well as in higher-level languages such as Matlab or Python, which natively support array operations. The expression `Math.max(...acfBuff)` is then equivalent to `Math.max(acfBuff[0], acfBuff[1], acfBuff[2] /*and so on*/)`.
+
+The maxIdx is the period in samples. From this value, we can obtain the fundamental frequency of the voice:
+```javascript
+let periodSamples = maxIdx;
+let fundFrequency = sampleRate / periodSamples; 
+```
 
 ### The excitation signal
 
