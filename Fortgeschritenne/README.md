@@ -13,7 +13,7 @@ Hint: Drag and drop audio files (.wav and .mp3) at the bottom of the webpage to 
 #### [Introduction to the Web Audio API](docs/Introduction.md)
 An introduction to the Web Audio API and AudioWorklets.
 
-#### [Introduction to the the speech production model](docs/speech_production_model.md)
+#### [Introduction to the speech production model](docs/speech_production_model.md)
 An introduction to the speech production model and linear predictive coding (LPC).
 
 #### [Chapter 1. Overlap and add](docs/Chapter%201.%20Overlap%20and%20add.md)
@@ -41,7 +41,7 @@ Yet to do
 ## Todo list
 * Fix excitation signal (error signal and excitation signal are very different) (Problem with excitation signal comes from high sampling rate (LPC is used to predict high frequency and its not so useful for speech glottal separation).)
 * Discontinuities between pulses (not appearing for voice, only for tones?)
-* Spectral representation (use Web Audio API fft)
+* Spectral representation (use Web Audio API fft) --> disappears when changing the vocal tract length!!
 * 2D interface (age - gender) (requires vibrato and good speech reconstruction quality)
   * Vibrato: sinusoid (vibrato) and noise (jitter). The pitch modulations are not exactly periodic, but not random either.
 * Manual resampling as Audio Worklet module?
