@@ -270,7 +270,7 @@ class Vocoder extends AudioWorkletProcessor {
 
   createMixedExcitation(periodSamples, errorRMS) {
 
-    this._ mixedExcitationSignal = createTonalExcitation(periodSamples, errorRMS);
+    this._mixedExcitationSignal = this._errorBuffer;
     this._excitationSignal = createNoiseExcitation(errorRMS);
     for (let i=0; i<this._frameSize, i++){
       this._excitationSignal[i] = this._tonalConfidence * this._mixedExcitationSignal[i] + (1-this._tonalConfidence) * this._excitationSignal[i];
