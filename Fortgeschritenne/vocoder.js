@@ -101,7 +101,7 @@ class Vocoder extends AudioWorkletProcessor {
     this._oldTonalBuffer = new Float32Array(this._frameSize/2);
     this._excitationSignal = new Float32Array(this._frameSize);
     this._errorBuffer = new Float32Array(this._frameSize);
-    this._ mixedExcitationSignal = new Float32Array(this._frameSize);
+    this._mixedExcitationSignal = new Float32Array(this._frameSize);
 
     // autocorrelation indices for fundamental frequency estimation
     this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
