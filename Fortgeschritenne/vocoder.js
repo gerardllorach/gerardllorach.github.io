@@ -160,9 +160,14 @@ class Vocoder extends AudioWorkletProcessor {
       this._confidenceTonalThreshold = e.data.voicedThreshold;
       break;
 
+    case "pitchFactor":
+      this._pitchFactor = e.data.pitchFactor;
+      break;
+
     case "voiceMap":
       // Voiced / Unvoiced Synthesis
       this._unvoicedMix = e.data.unvoicedMix;
+      this._confidenceTonalThreshold = e.data.voicedThreshold;
       // Resampling (vocal tract length)
       if (e.data.vocalTractFactor != this._resamplingFactor){
         this._resamplingFactor = e.data.vocalTractFactor;
@@ -185,6 +190,7 @@ class Vocoder extends AudioWorkletProcessor {
         this._resampler.update(this._resamplingFactor);
       }
       this._confidenceTonalThreshold = e.data.voicedThreshold;
+      this._pitchFactor = e.data.pitchFactor;
       break;
 
 
@@ -268,12 +274,13 @@ class Vocoder extends AudioWorkletProcessor {
   }
 
 
+  // This is only used in the 2D Voice Map when the error signal is used for synthesis
   createMixedExcitation(periodSamples, errorRMS) {
 
     this._mixedExcitationSignal = this._errorBuffer;
     this._excitationSignal = this.createNoiseExcitation(errorRMS);
     for (let i=0; i<this._frameSize; i++){
-      this._excitationSignal[i] = this._tonalConfidence * this._mixedExcitationSignal[i] + (1-this._tonalConfidence) * this._excitationSignal[i];
+      this._excitationSignal[i] = this._unvoicedMix * this._mixedExcitationSignal[i] + (1-this._unvoicedMix) * this._excitationSignal[i];
     }
     return this._excitationSignal;
   }

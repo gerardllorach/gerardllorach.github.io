@@ -133,6 +133,8 @@ startDemo = () => {
   const perfectSButton = document.getElementById("perfectSynthButton");
   const voicedThresSlider = document.getElementById("voicedThresSlider");
   const voicedThresInfo = document.getElementById("voicedThresInfo");
+  const pitchSlider = document.getElementById("pitchSlider");
+  const pitchInfo = document.getElementById("pitchInfo");
   const quantInfo = document.getElementById("quantInfo");
   const selSoundContainer = document.getElementById("selSoundContainer");
   const selectAudioList = document.getElementById("selectAudio");
@@ -166,7 +168,7 @@ startDemo = () => {
     if (!playing) {
       // check if context is in suspended state (autoplay policy)
       if (audioCtx.state === 'suspended') {
-	console.log("resuming audio context");
+        console.log("resuming audio context");
         audioCtx.resume();
       }
 
@@ -229,7 +231,10 @@ startDemo = () => {
       reverseKButton.parentElement.hidden = false;
       perfectSButton.parentElement.hidden = false;
       tractLengthSlider.parentElement.hidden = false;
-      voicedThresSlider.parentElement.hidden = false;
+      if (perfectSButton.checked){
+        voicedThresSlider.parentElement.hidden = false;
+        pitchSlider.parentElement.hidden = false;
+      }
     } else {
       // Hide vocoder HTML elements
       quantButton.parentElement.hidden = true;
@@ -237,6 +242,7 @@ startDemo = () => {
       perfectSButton.parentElement.hidden = true;
       tractLengthSlider.parentElement.hidden = true;
       voicedThresSlider.parentElement.hidden = true;
+      pitchSlider.parentElement.hidden = true;
 
       vocoderNode.disconnect();
     }
@@ -282,7 +288,15 @@ startDemo = () => {
     vocoderNode.port.postMessage({
       id: "perfectSynth",
       perfectSynthOpt: !perfectSButton.checked, // Reversed perfect synth check
-    })
+    });
+    // Hide voiced/unvoiced
+    if (!perfectSButton.checked){ // Show if using impulse excitation
+      voicedThresSlider.parentElement.hidden = true;
+      pitchSlider.parentElement.hidden = true;
+    } else {
+      voicedThresSlider.parentElement.hidden = false;
+      pitchSlider.parentElement.hidden = false;
+    }
   }
   // Loop/Unloop
   loopAudioButton.onclick = () => {
@@ -301,6 +315,16 @@ startDemo = () => {
     })
     // Show value
     tractLengthInfo.innerHTML = tractLengthSlider.value + "x length";
+  }
+
+  pitchSlider.oninput = () => {
+    // Send tract length slider value to AudioWorklet
+    vocoderNode.port.postMessage({
+      id: "pitchFactor",
+      pitchFactor: pitchSlider.value,
+    })
+    // Show value
+    pitchInfo.innerHTML = pitchSlider.value + "x factor";
   }
 
   voicedThresSlider.oninput = () => {
@@ -358,6 +382,7 @@ startDemo = () => {
       reverseKOpt: reverseKButton.checked,
       vocalTractFactor: tractLengthSlider.value,
       voicedThreshold: voicedThresSlider.value,
+      pitchFactor: pitchSlider.value,
     });
   }
 
