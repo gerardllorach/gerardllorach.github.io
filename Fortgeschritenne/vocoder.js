@@ -87,6 +87,8 @@ class Vocoder extends AudioWorkletProcessor {
     // resampling before analysis
     this._resamplingFactor = 1;
     this._resampler = new Resampler(this._frameSize, this._resamplingFactor);
+    // Unvoiced mix (adds noise to the perfect excitation signal)
+    this._unvoicedMix = 0;
     // Pitch factor (modifies this._fundFreq)
     this._pitchFactor = 1;
     // Vibrato effect (modifies this._fundFreq)
@@ -160,7 +162,7 @@ class Vocoder extends AudioWorkletProcessor {
 
     case "voiceMap":
       // Voiced / Unvoiced Synthesis
-      this._confidenceTonalThreshold = e.data.voicedThreshold;
+      this._unvoicedMix = e.data.unvoicedMix;
       // Resampling (vocal tract length)
       if (e.data.vocalTractFactor != this._resamplingFactor){
         this._resamplingFactor = e.data.vocalTractFactor;
@@ -171,6 +173,20 @@ class Vocoder extends AudioWorkletProcessor {
       // Vibrato
       //e.data.vibratoEffect;
       break;
+
+    case "options":
+      // Receive all options
+      this._perfectSynthOpt = e.data.perfectSynthOpt;
+      this._quantOpt = e.data.quantOpt;
+      this._quantBits = e.data.quantBits;
+      this._reverseKOpt = e.data.reverseKOpt;
+      if (e.data.vocalTractFactor != this._resamplingFactor){
+        this._resamplingFactor = e.data.vocalTractFactor;
+        this._resampler.update(this._resamplingFactor);
+      }
+      this._confidenceTonalThreshold = e.data.voicedThreshold;
+      break;
+
 
     default: // any unknown ID: log the message ID
       console.log("unknown message received:")

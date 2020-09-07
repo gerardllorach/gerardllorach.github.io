@@ -66,7 +66,7 @@ function voiceTransformations(x,y){
   // 0,0 --> Child
   var vocalTractFactor = 1;
   var pitchFactor = 1;
-  var voicedThres = 0.4; // Default (0 all voiced, 1 all unvoiced)
+  var unvoicedMix = 0; // Default (0 all perfect, 1 all unvoiced)
   var vibratoEffect = 0;
 
   // Distances
@@ -100,7 +100,7 @@ function voiceTransformations(x,y){
   // Unvoiced
   if (dist11 < 0.5){
     var zero2one = (0.5-dist11)*2;
-    voicedThres = 0.4 + zero2one*0.6;
+    unvoicedMix = zero2one;
     vibratoEffect = zero2one;
   }
 
@@ -108,7 +108,7 @@ function voiceTransformations(x,y){
     id: "voiceMap",
     vocalTractFactor: vocalTractFactor,
     pitchFactor: pitchFactor,
-    voicedThreshold: voicedThres,
+    unvoicedMix: unvoicedMix,
     vibratoEffect: vibratoEffect
   }
 
