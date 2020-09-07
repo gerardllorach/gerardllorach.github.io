@@ -101,7 +101,7 @@ class Vocoder extends AudioWorkletProcessor {
     this._oldTonalBuffer = new Float32Array(this._frameSize/2);
     this._excitationSignal = new Float32Array(this._frameSize);
     this._errorBuffer = new Float32Array(this._frameSize);
-    this._ mixedExcitationSignal = new Float32Array(this._frameSize);
+    this._mixedExcitationSignal = new Float32Array(this._frameSize);
 
     // autocorrelation indices for fundamental frequency estimation
     this._lowerACFBound = Math.floor(sampleRate / 200); // 200 Hz upper frequency limit -> lower limit for periodicity in samples
@@ -271,8 +271,8 @@ class Vocoder extends AudioWorkletProcessor {
   createMixedExcitation(periodSamples, errorRMS) {
 
     this._mixedExcitationSignal = this._errorBuffer;
-    this._excitationSignal = createNoiseExcitation(errorRMS);
-    for (let i=0; i<this._frameSize, i++){
+    this._excitationSignal = this.createNoiseExcitation(errorRMS);
+    for (let i=0; i<this._frameSize; i++){
       this._excitationSignal[i] = this._tonalConfidence * this._mixedExcitationSignal[i] + (1-this._tonalConfidence) * this._excitationSignal[i];
     }
     return this._excitationSignal;
