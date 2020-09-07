@@ -278,10 +278,10 @@ startDemo = () => {
   }
   // Perfect Synthesis on/off
   perfectSButton.onclick = () => {
-    // Send quantization on/off
+    // Send use impulse on/off
     vocoderNode.port.postMessage({
       id: "perfectSynth",
-      perfectSynthOpt: perfectSButton.checked,
+      perfectSynthOpt: !perfectSButton.checked, // Reversed perfect synth check
     })
   }
   // Loop/Unloop
@@ -349,6 +349,16 @@ startDemo = () => {
     } else {
       connect_fileSource();
     }
+    // Send options
+    vocoderNode.port.postMessage({
+      id: "options",
+      perfectSynthOpt: !perfectSButton.checked, // Reversed "use impulse"
+      quantOpt: quantButton.checked,
+      quantBits: quantSlider.value,
+      reverseKOpt: reverseKButton.checked,
+      vocalTractFactor: tractLengthSlider.value,
+      voicedThreshold: voicedThresSlider.value,
+    });
   }
 
   function disconnect_all(){
