@@ -395,6 +395,11 @@ startDemo = () => {
       canvasCtx.lineTo(i*stepW, inBuffer[i]*stepH*factor);
     }
     canvasCtx.stroke();
+	  
+    // Draw axis value
+    drawText("-" + factor, -20, stepH);
+    drawText("0", -20, -2);
+    drawText(factor, -20, -stepH);
   }
 
 
@@ -489,9 +494,6 @@ startDemo = () => {
         paintWave(lpcCoeff);
         canvasCtx.translate(-wposW,-wposH);
         drawText("LPC coefficients", wposW, wposH+75);
-	drawText("-1", wposW-20, wposH+75);
-	drawText("0", wposW-20, wposH);
-	drawText("1", wposW-20, wposH-75);
       }
 
       // Plot tube areas from speech (wakita), page 63
