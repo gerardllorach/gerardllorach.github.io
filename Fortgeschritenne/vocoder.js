@@ -412,8 +412,8 @@ class Vocoder extends AudioWorkletProcessor {
 
 
     // Perfect excitation
-    //if (this._perfectSynthOpt)
-    //  this._excitationSignal = this._errorBuffer.slice();
+    if (this._perfectSynthOpt)
+      this._excitationSignal = this._errorBuffer.slice();
 
 
     // IIR Filter
