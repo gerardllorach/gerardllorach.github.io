@@ -35,7 +35,7 @@ Canvas HTML, microphone input, drag and drop of audio files.
 2D interface for voice transformations (gender and age).
 
 #### Chapter 7. Visualization
-Yet to do
+Do we really need this?
 
 #### [Known Issues](docs/KnownIssues.md)
 A list of problems that come with the app.
