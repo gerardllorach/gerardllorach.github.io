@@ -274,12 +274,13 @@ class Vocoder extends AudioWorkletProcessor {
   }
 
 
+  // This is only used in the 2D Voice Map when the error signal is used for synthesis
   createMixedExcitation(periodSamples, errorRMS) {
 
     this._mixedExcitationSignal = this._errorBuffer;
     this._excitationSignal = createNoiseExcitation(errorRMS);
     for (let i=0; i<this._frameSize, i++){
-      this._excitationSignal[i] = this._tonalConfidence * this._mixedExcitationSignal[i] + (1-this._tonalConfidence) * this._excitationSignal[i];
+      this._excitationSignal[i] = this._unvoicedMix * this._mixedExcitationSignal[i] + (1-this._unvoicedMix) * this._excitationSignal[i];
     }
     return this._excitationSignal;
   }
