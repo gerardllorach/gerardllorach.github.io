@@ -159,9 +159,14 @@ class Vocoder extends AudioWorkletProcessor {
       this._confidenceTonalThreshold = e.data.voicedThreshold;
       break;
 
+    case "pitchFactor":
+      this._pitchFactor = e.data.pitchFactor;
+      break;
+
     case "voiceMap":
       // Voiced / Unvoiced Synthesis
       this._unvoicedMix = e.data.unvoicedMix;
+      this._confidenceTonalThreshold = e.data.voicedThreshold;
       // Resampling (vocal tract length)
       if (e.data.vocalTractFactor != this._resamplingFactor){
         this._resamplingFactor = e.data.vocalTractFactor;
@@ -184,6 +189,7 @@ class Vocoder extends AudioWorkletProcessor {
         this._resampler.update(this._resamplingFactor);
       }
       this._confidenceTonalThreshold = e.data.voicedThreshold;
+      this._pitchFactor = e.data.pitchFactor;
       break;
 
 
