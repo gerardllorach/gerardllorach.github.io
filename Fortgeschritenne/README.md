@@ -35,10 +35,10 @@ Canvas HTML, microphone input, drag and drop of audio files.
 2D interface for voice transformations (gender and age).
 
 #### Chapter 7. Visualization
-Yet to do
+Do we really need this?
 
 #### [Known Issues](docs/KnownIssues.md)
-
+A list of problems that come with the app.
 
 ## Todo list
 * Fix excitation signal (error signal and excitation signal are very different) (Problem with excitation signal comes from high sampling rate (LPC is used to predict high frequency and its not so useful for speech glottal separation).)

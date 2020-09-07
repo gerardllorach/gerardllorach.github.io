@@ -370,7 +370,7 @@ startDemo = () => {
 
     // Scale of wave
     let stepW = 0.3*canvas.width/inBuffer.length;
-    let stepH = 100;
+    let stepH = 75;
     // Axis
     canvasCtx.lineWidth = "1";
     canvasCtx.strokeStyle = "rgba(255,255,255, 0.5)";
@@ -395,6 +395,11 @@ startDemo = () => {
       canvasCtx.lineTo(i*stepW, inBuffer[i]*stepH*factor);
     }
     canvasCtx.stroke();
+	  
+    // Draw axis value
+    drawText("-" + factor, -20, stepH);
+    drawText("0", -20, -2);
+    drawText(factor, -20, -stepH);
   }
 
 
@@ -444,7 +449,7 @@ startDemo = () => {
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer);
       canvasCtx.translate(-wposW,-wposH);
-      drawText("Buffer odd", wposW, wposH+100);
+      drawText("Buffer odd", wposW, wposH+75);
 
       // Plot oddBuffer
       wposW = canvas.width/2;
@@ -452,7 +457,7 @@ startDemo = () => {
       canvasCtx.translate(wposW,wposH);
       paintWave(workletBuffer2);
       canvasCtx.translate(-wposW,-wposH);
-      drawText("Buffer pair", wposW, wposH+100);
+      drawText("Buffer pair", wposW, wposH+75);
 
       // Plot block
       wposW = canvas.width/2;
@@ -461,7 +466,7 @@ startDemo = () => {
       paintWave(pBlock);
       paintWave(oBlock);
       canvasCtx.translate(-wposW,-wposH);
-      drawText("Blocks (128 samples)", wposW, wposH+100);
+      drawText("Blocks (128 samples)", wposW, wposH+75);
 
       // Plot excitationSignal
       wposW = 100;
@@ -469,7 +474,7 @@ startDemo = () => {
       canvasCtx.translate(wposW,wposH);
       paintWave(excitationSignal, 10);
       canvasCtx.translate(-wposW,-wposH);
-      drawText("Excitation signal", wposW, wposH+120, 0, "white");
+      drawText("Excitation signal", wposW, wposH+100, 0, "white");
 
       // Plot errorSignal
       wposW = 100;
@@ -477,7 +482,7 @@ startDemo = () => {
       canvasCtx.translate(wposW,wposH);
       paintWave(errorSignal, 10, 'red');
       canvasCtx.translate(-wposW,-wposH);
-      drawText("Error signal", wposW, wposH+100, 0, "red");
+      drawText("Error signal", wposW, wposH+75, 0, "red");
 
 
       // Plot LPC coefficients
@@ -488,7 +493,7 @@ startDemo = () => {
         paintWave(lpcCoeff);
         paintWave(lpcCoeff);
         canvasCtx.translate(-wposW,-wposH);
-        drawText("LPC coefficients", wposW, wposH+100);
+        drawText("LPC coefficients", wposW, wposH+75);
       }
 
       // Plot tube areas from speech (wakita), page 63
