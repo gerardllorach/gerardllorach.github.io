@@ -364,14 +364,15 @@ class Vocoder extends AudioWorkletProcessor {
     if (this._resamplingFactor != 1) {
       this._resampler.resampBuffer = this._resampler.resampleLinear(inBuffer, this._frameSize, this._resamplingFactor);
       LPC.calculateLPC(this._resampler.resampBuffer, this._lpcOrder, this._lpcCoeff, this._kCoeff);
+      // Calculate error signal
+      LPC.calculateErrorSignal(this._resampler.resampBuffer, this._lpcCoeff, this._errorBuffer);
     } else {
       // Getting the a coefficients and k coefficients
       // The a coefficients are used for the filter
       LPC.calculateLPC(inBuffer, this._lpcOrder, this._lpcCoeff, this._kCoeff);
+      // Calculate error signal
+      LPC.calculateErrorSignal(inBuffer, this._lpcCoeff, this._errorBuffer);
     }
-
-    // Calculate error signal
-    LPC.calculateErrorSignal(inBuffer, this._lpcCoeff, this._errorBuffer);
 
 
     // Quantazie LPC coefficients if selected
