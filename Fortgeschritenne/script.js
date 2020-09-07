@@ -549,6 +549,9 @@ startDemo = () => {
         drawText("Magnitude spectrum (dB)", wposW, wposH+0.7*maxHeight, 0, "red");
 
       }
+      else {
+	console.log('Problem with fft plot: analyseArray was undefined!')
+      }
     }
 
     // Instructions for drag and drop

@@ -28,18 +28,22 @@ class Resampler {
 
     this.filteredBuffer = new Float32Array(this.framesize);
     this.resampBuffer = new Float32Array(Math.round(this.framesize * this.resampFactor));
+    this.storageBuffer = new Float32Array(Math.round(this.framesize * 2));
 
   }
 
 
   clearResampBuffer() {
 
+    for (var i=0; i<this.resampBuffer.length; i++){
+      this.storageBuffer[i] = this.resampBuffer[i];
+    }
     let newFramesize = Math.round(this.framesize * this.resampFactor);
 
     if (this.resampFactor > 1){
       newFramesize -= 1; // this is a cheap workaround but it doesnt matter so much for LPC analysis, right?
     }
-    this.resampBuffer = new Float32Array(newFramesize);
+    this.resampBuffer = this.storageBuffer.slice(0, newFramesize-1);
   }
 
 
@@ -115,7 +119,6 @@ class Resampler {
 	this.resampBuffer[x_new] = (y_left * (x_right - x_new) + y_right * (x_new - x_left)) / (x_right - x_left);
       }
     }
-
     return this.resampBuffer;
   }
 
