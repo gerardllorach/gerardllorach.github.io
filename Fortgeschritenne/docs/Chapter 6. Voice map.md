@@ -4,7 +4,7 @@ In our app we implemented a 2D interface to do voice transformations. The 2D int
 
 ![Alt text](img/VoiceMap.png?raw=true "Voice map")
 
-All transformations in the voice map are linear and use basic 2D distances. The gender transformations take place all over the 2D map. The age transformations modify the voice at the bottom-left and top-right corners.
+All transformations in the voice map are linear and use basic 2D distances. The gender transformations take place all over the 2D map. The age transformations modify the voice at the bottom-left and top-right corners. The pitch transformation is not available when the error signal is used for synthesis (Impulse Excitation OFF) and the vibrato is not implemented in the current state of the app.
 
 To simulate a child's voice, the vocal tract length is reduced by a factor. The factor in the interface goes from 0.5 to 1, i.e. at the bottom-left corner the reduction of the vocal tract length will be by half and outside the circle the vocal tract won't be modified.
 
@@ -36,5 +36,5 @@ else{
 }
 ```
 
-The older voice transformation is based on the voiced/unvoiced threshold. When humans get older, they have trouble generating voiced sounds. Therefore, an older voice will have more unvoiced sounds, like whispering. The vibrato is currently not implemented. The default value for the voiced/unvoiced threshold is 0.4 (0 equals to complete voiced synthesis, 1 to unvoiced synthesis only). This threshold is related to the autocorrelation and it is named tonalConfidence in the code (see  [Chapter 3](Chapter%203.%20Voice%20synthesis.md)). In our voice map, the threshold will go from 0.4 to 1 when the user gets closer to the extreme at the top-right corner. The gender voice transformation interacts with this voice transformation but with a small effect.
+The older voice transformation is based on the voiced/unvoiced threshold. When humans get older, they have trouble generating voiced sounds. Therefore, an older voice will have more unvoiced sounds, like whispering. The default value for the voiced/unvoiced threshold is 0.4 (0 equals to complete voiced synthesis, 1 to unvoiced synthesis only). This threshold is related to the autocorrelation and it is named tonalConfidence in the code (see  [Chapter 3](Chapter%203.%20Voice%20synthesis.md)). In our voice map, the threshold will go from 0.4 to 1 when the user gets closer to the extreme at the top-right corner. The gender voice transformation interacts with this voice transformation but with a small effect.
 
