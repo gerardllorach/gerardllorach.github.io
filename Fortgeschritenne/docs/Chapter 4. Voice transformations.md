@@ -76,6 +76,8 @@ Here, the `Q`-factor describes the trade-off between an overshoot at the resonan
 
 In our application the user can change the vocal tract length in real-time using a slider. Because of this, the biquad filter parameters need to change in real-time. Our current implementation has gradual decay (it's not very steep at the cutoff frequency) which creates aliasing artifacts. We decided to multiply the cutoff frequency of the filter by a factor of 0.75 to reduce the artifacts. We set the `Q`-factor to 2 to increase the steepness of the filter and to further reduce artifacts. The effects of the `Q`-factor and the filter implementation can be seen here: http://aikelab.net/filter/
 
+___
+
 [Next chapter](Chapter%205.%20Web%20interface.md)
 
 [Back to main](../README.md)
