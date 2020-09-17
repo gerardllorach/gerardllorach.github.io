@@ -4,7 +4,7 @@ In our app we implemented a 2D interface to do voice transformations. The 2D int
 
 ![Alt text](img/VoiceMap.png?raw=true "Voice map")
 
-All transformations in the voice map are linear and use basic 2D distances. The gender transformations take place all over the 2D map. The age transformations modify the voice at the bottom-left and top-right corners. The pitch transformation is not available when the error signal is used for synthesis (Impulse Excitation OFF) and the vibrato is not implemented in the current state of the app.
+All transformations in the voice map are linear in terms of the parameters they change, and use basic 2D distances. The gender transformations take place all over the 2D map. The age transformations modify the voice at the bottom-left and top-right corners. The pitch transformation is not available when the error signal is used for synthesis (Impulse Excitation OFF) and the vibrato is not implemented in the current state of the app.
 
 To simulate a child's voice, the vocal tract length is reduced by a factor. The factor in the interface goes from 0.5 to 1, i.e. at the bottom-left corner the reduction of the vocal tract length will be by half and outside the circle the vocal tract won't be modified.
 
