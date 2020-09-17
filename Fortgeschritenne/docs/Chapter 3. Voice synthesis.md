@@ -106,5 +106,8 @@ for (let i = 0; i< inBuffer.length; i++){
 
 return outBuffer
 ```
+___
 
 [Next chapter](Chapter%204.%20Voice%20transformations.md)
+
+[Back to main](../README.md)
