@@ -106,3 +106,5 @@ for (let i = 0; i< inBuffer.length; i++){
 
 return outBuffer
 ```
+
+[Next article](Chapter%204.%20Voice%20transformations.md)
