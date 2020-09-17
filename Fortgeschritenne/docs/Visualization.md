@@ -1,4 +1,4 @@
-## Visualization
+## Chapter 7. Visualization
 
 In order to understand what is happening inside the application, we are plotting several signals in the canvas. Most of them are quite straighforward to display, as they are one dimensional arrays. The most interesting visualization to talk about is the shape of the vocal tract.
 
