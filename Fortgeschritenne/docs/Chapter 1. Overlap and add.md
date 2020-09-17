@@ -1,5 +1,7 @@
 ## Chapter 1. Overlap and add
 
+This chapter is quite technical. It's about the preparation of audio frames to be able to calculate voice parameters.
+
 ### Block processing with the AudioWorklet
 The AudioWorklet code (vocoder.js) is called for each new audio block. The audio blocks consist of 128 samples (render quantum), which corresponds to approx. 3ms at 44.1 kHz. The sampling rate is set by default according to the sampling rate of the output device. If sampling rate is manually set, some latency issues could appear as the browser will have to resample the audio output to match the sampling rate of the device. In order to be more flexible, we made our application invariant to the sampling rate. More info can be found here: https://www.w3.org/TR/webaudio/#AudioContext-constructors
 
@@ -72,14 +74,14 @@ A buffer is complete when its last 128 samples, i.e. its last block, are filled.
 ### Output block: overlap and add routine
 In this app, we have an overlap of 50%. For an overlap of 50% or less, only two frames are required. In this code, we have allocated two buffers for the synthesis. These buffers (pairSynthBuffer and oddSynthBuffer) are computed each time a full frame is obtained (see previous section).
 
-The output block of the AudioWorklet has a size of 128 samples, as the input. We use a similar strategy as before, but instead of assigning the incoming block to the buffers, we use the synthesized buffers to compute the output block. We use a Hanning window to add the corresponding blocks of the synthesized buffers. The minimum delay of the system is one frame duration. Currently the application only works well for frames with an even number of blocks.
+The output block of the AudioWorklet has a size of 128 samples, as the input. We use a similar strategy as before, but instead of assigning the incoming block to the buffers, we use the synthesized buffers to compute the output block. We use a Hann window to add the corresponding blocks of the synthesized buffers. The minimum delay of the system is one frame duration. Currently the application only works well for frames with an even number of blocks.
 
 ```
 ...                
-Hanning          /´ ˆ `\
-pairSynthBuffer  0 0 X 0
-Hanning              /´ ˆ `\
-oddSynthBuffer       X O O O
+Hann window          /´ ˆ `\
+pairSynthBuffer      0 0 X 0
+Hann window              /´ ˆ `\
+oddSynthBuffer           X O O O
 ...
 
 ```
