@@ -10,6 +10,7 @@ The model assumes that the waves going through the sections can be treated as pl
 
 ```javascript
 // Calculate areas
+let a = [1];
 for (let i = 1; i<kCoeff.length; i++){
   a[i] = a[i-1]*(1-kCoeff[i-1])/(1+kCoeff[i-1]);
 }
