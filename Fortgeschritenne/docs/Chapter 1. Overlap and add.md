@@ -1,6 +1,6 @@
 ## Chapter 1. Overlap and add
 
-This chapter is quite technical. It deals with the Web Audio API technical challenges. The chapter is about the preparation of audio frames to be able to calculate voice parameters. If you are just interested in the voice transformations you can skip this chapter.
+This chapter is quite technical. It deals with the Web Audio API technical challenges. The chapter is about the preparation of audio frames to be able to calculate voice parameters. If you are just interested in the voice transformations you should skip this chapter.
 
 ### Block processing with the AudioWorklet
 The AudioWorklet code (vocoder.js) is called for each new audio block. The audio blocks consist of 128 samples (render quantum), which corresponds to approx. 3ms at 44.1 kHz. The sampling rate is set by default according to the sampling rate of the output device. If sampling rate is manually set, some latency issues could appear as the browser will have to resample the audio output to match the sampling rate of the device. In order to be more flexible, we made our application invariant to the sampling rate. More info can be found here: https://www.w3.org/TR/webaudio/#AudioContext-constructors
@@ -15,7 +15,7 @@ const fSize = frameDuration*sampleRate;
 this._frameSize = 128*Math.round(fSize/128); // Frame duration = this._frameSize/sampleRate;
 ```
 
-In the current implementation we am using two buffers, which we call odd and pair. The pair buffer should be called "even", it was a translation mistake from catalan. The naming might change in following implementations.
+In the current implementation we are using two buffers, which we call odd and pair. The pair buffer should be called "even", it was a translation mistake from catalan. The naming might change in following implementations.
 
 The even buffer stores the frames with even numbering (0,2,4,6,8...) and the odd buffer the odd ones (1,3,5,7,9...). In this implementations, we do 50% overlap, therefore only two buffers are needed. If more than two frames need to be overlapping, this code will not work.
 
@@ -87,5 +87,6 @@ oddSynthBuffer           X O O O
 ```
 
 ### Frame rate and blocks
-Vocoder and other speech transformations might work better with a lower sampling frequency, preferably between 8kHz and 16kHz. By default, the sampling frequency of my browser is 48 kHz. But in Chrome, one can specify the sampling frequency of the AudioContext. Nevertheless, if the sampling rate is very low the app can run into problems. It can be that one frame equals to one block. Because we are working with blocks to create frames, in this particular case, there will be no "overlap and add" and some clicks might appear between frames. One possible solution would be to force a minimum of two blocks per frame. The other would be to work on a sample level, which would lead to more delay.
+Vocoder and other speech transformations might work better with a lower sampling frequency, preferably between 8kHz and 12kHz. By default, the sampling frequency of the browser is 48 kHz. In Chrome, one can specify the sampling frequency of the AudioContext. Nevertheless, if the sampling rate is very low the app can run into problems. It can be that one frame equals to one block. Because we are working with blocks to create frames, in this particular case, there will be no "overlap and add" and some clicks might appear between frames. One possible solution would be to force a minimum of two blocks per frame. The other would be to work on a sample level, which would lead to more delay.
 
+[Next chapter](Chapter%202.%20LPC%20coefficients.md)
