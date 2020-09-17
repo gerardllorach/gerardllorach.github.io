@@ -38,3 +38,8 @@ else{
 
 The older voice transformation is based on the voiced/unvoiced threshold. When humans get older, they have trouble generating voiced sounds. Therefore, an older voice will have more unvoiced sounds, like whispering. The default value for the voiced/unvoiced threshold is 0.4 (0 equals to complete voiced synthesis, 1 to unvoiced synthesis only). This threshold is related to the autocorrelation and it is named tonalConfidence in the code (see  [Chapter 3](Chapter%203.%20Voice%20synthesis.md)). In our voice map, the threshold will go from 0.4 to 1 when the user gets closer to the extreme at the top-right corner. The gender voice transformation interacts with this voice transformation but with a small effect.
 
+___
+
+[Next chapter](KnownIssues.md)
+
+[Back to main](../README.md)
