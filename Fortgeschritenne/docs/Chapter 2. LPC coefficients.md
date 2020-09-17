@@ -55,4 +55,8 @@ return coeff;
 
 The aforementioned code provides the LPC coefficients. In our implementation we also store the k coefficients, as there are interesting modifications and visualizations that one can do with them.
 
+___
+
 [Next chapter](Chapter%203.%20Voice%20synthesis.md)
+
+[Back to main](../README.md)
