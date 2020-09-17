@@ -34,8 +34,8 @@ Canvas HTML, microphone input, drag and drop of audio files.
 #### [Chapter 6. Voice map](docs/Chapter%206.%20Voice%20map.md)
 2D interface for voice transformations (gender and age).
 
-#### Chapter 7. Visualization
-Do we really need this?
+#### [Chapter 7. Visualization](docs/Visualization.md)
+Vocal tract shape estimation.
 
 #### [Known Issues](docs/KnownIssues.md)
 A list of problems that come with the app.
