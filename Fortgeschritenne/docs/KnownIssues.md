@@ -4,3 +4,7 @@ According to the Web Audio API, the sampling rate of the AudioContext can be mod
 
 ### Audio Worklets and updates
 During the project, one of us updated Windows and suddenly the app stopped working. Even the sample demos from the Audio Worklet group failed to run. After the semester break, there was another Windows update that fixed the issue. This technology is still experimental and in development, therefore it is quite probable that at some point it stops working due to recent updates.
+
+___
+
+[Back to main](../README.md)
