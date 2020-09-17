@@ -44,4 +44,4 @@ A list of problems that come with the app.
 * 2D interface (age - gender)
   * Add Vibrato: sinusoid (vibrato) and noise (jitter). The pitch modulations are not exactly periodic, but not random either.
   * Implement pitch transformations when using the error signal (Impuse Excitation OFF).
-* Manual resampling as Audio Worklet module?
+* Manual resampling? (Audiocontext downsampling adds artifacts)
