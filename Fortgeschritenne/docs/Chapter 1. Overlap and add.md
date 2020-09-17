@@ -1,6 +1,6 @@
 ## Chapter 1. Overlap and add
 
-This chapter is quite technical. It's about the preparation of audio frames to be able to calculate voice parameters.
+This chapter is quite technical. It deals with the Web Audio API technical challenges. The chapter is about the preparation of audio frames to be able to calculate voice parameters. If you are just interested in the voice transformations you can skip this chapter.
 
 ### Block processing with the AudioWorklet
 The AudioWorklet code (vocoder.js) is called for each new audio block. The audio blocks consist of 128 samples (render quantum), which corresponds to approx. 3ms at 44.1 kHz. The sampling rate is set by default according to the sampling rate of the output device. If sampling rate is manually set, some latency issues could appear as the browser will have to resample the audio output to match the sampling rate of the device. In order to be more flexible, we made our application invariant to the sampling rate. More info can be found here: https://www.w3.org/TR/webaudio/#AudioContext-constructors
