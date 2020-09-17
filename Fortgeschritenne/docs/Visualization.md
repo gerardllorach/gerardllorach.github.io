@@ -8,7 +8,7 @@ The vocal tract shape can be modelled as a pipe with different areas accross its
 
 The model assumes that the waves going through the sections can be treated as plane waves, and most importantly, that the tube is rigid, i.e. there is no energy loss when the waves travel and get reflected. These areas can be calculated using the PARCOR coefficients, because they are related to the areas of the lossless tubes:
 
-```javacript
+```javascript
 // Calculate areas
 for (let i = 1; i<kCoeff.length; i++){
   a[i] = a[i-1]*(1-kCoeff[i-1])/(1+kCoeff[i-1]);
