@@ -10,7 +10,7 @@ As a rough approximation, this excitation can be assumed to have a pulse train-l
 
 When this excitation moves through the vocal tract and out of the mouth, it is altered by their acoustic transfer function. 
 During speech production, movements in this area, such as lifting tongue or opening of the mouth will alter the resulting sound.
-If inertia in movement is assumed within short time frames such as 20 ms, this transfer behaviour can be modeled as linear filtering, with a different filter for each frame. 
+If inertia in movement is assumed within short time frames such as 20 ms, this transfer behaviour can be modeled as linear time-invariant filtering, with a different filter for each frame. This approximation results in fixed filters for each segment that do not change within each segment.
 Since the vocal tract has a shape similar to a tube with varying diameter, it is reasonable to model individual sections of the vocal tract as tubes. 
 For the entire tract, the result is a multi-resonance all-pole-filter. 
 This model is able to explain major features observed in tonal speech components, the formants.
