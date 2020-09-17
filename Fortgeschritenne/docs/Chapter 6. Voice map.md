@@ -40,6 +40,6 @@ The older voice transformation is based on the voiced/unvoiced threshold. When h
 
 ___
 
-[Next chapter](KnownIssues.md)
+[Next chapter](Visualization.md.md)
 
 [Back to main](../README.md)
