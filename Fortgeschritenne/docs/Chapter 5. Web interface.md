@@ -13,7 +13,7 @@ Sawtooth wave for a frame size of 1024
 0...1024..2048..3072..4096...
 ```
 
-In order to play different audios in the app, the canvas has a drag a drop function: one can drag and drop and audio file in the web interface. The audio file is then loaded and displayed in the select list. Multiple audio files can also be dragged and dropped. Only ".wav" files are accepted. In my computer the Web Audio API works at 48 kHz, therefore I used audiofiles at 48 kHz to avoid latency issues.
+In order to play different audios in the app, the canvas has a drag a drop function: one can drag and drop an audio file in the web interface. The audio file is then loaded and displayed in the select list. Multiple audio files can also be dragged and dropped. Only ".wav" and ".mp3" files are accepted.
 
 
 
@@ -29,4 +29,4 @@ This step will create an AudioWorklet similar to the one required for file-wise 
 ```javascript
   streamSource.connect(vocoderNode).connect(audioCtx.destination);
 ```
-Since a lot of interface options have the potential to interfere with each other, a change in the processing scheme is accompanied by a re-connection of all processing nodes, and depending on the user interface states the appropriate AudioWorklets are selected and set to the appropriate state. As an example, if the microphone input is activated via checking a box, the file selection dropdown menu for audio file input will be hidden until the input is changed again.
+Since a lot of interface options have the potential to interfere with each other, a change in the processing scheme is accompanied by a re-connection of all processing nodes, and depending on the user interface states the appropriate AudioWorklets are selected and set to the appropriate state. As an example, if the microphone input is activated via checking a box, the file selection dropdown menu for audio file input will be hidden.
