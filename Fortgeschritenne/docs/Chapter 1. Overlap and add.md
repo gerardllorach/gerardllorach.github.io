@@ -74,7 +74,7 @@ A buffer is complete when its last 128 samples, i.e. its last block, are filled.
 ### Output block: overlap and add routine
 In this app, we have an overlap of 50%. For an overlap of 50% or less, only two frames are required. In this code, we have allocated two buffers for the synthesis. These buffers (pairSynthBuffer and oddSynthBuffer) are computed each time a full frame is obtained (see previous section).
 
-The output block of the AudioWorklet has a size of 128 samples, as the input. We use a similar strategy as before, but instead of assigning the incoming block to the buffers, we use the synthesized buffers to compute the output block. We use a Hann window to add the corresponding blocks of the synthesized buffers. The minimum delay of the system is one frame duration. Currently the application only works well for frames with an even number of blocks.
+The output block of the AudioWorklet has a size of 128 samples, as the input. We use a similar strategy as before, but instead of assigning the incoming block to the buffers, we use the synthesized buffers to compute the output block. We use a Hann window (see [Wikipedia article](https://en.wikipedia.org/wiki/Window_function)) to add the corresponding blocks of the synthesized buffers. The minimum delay of the system is one frame duration. Currently the application only works well for frames with an even number of blocks.
 
 ```
 ...                
