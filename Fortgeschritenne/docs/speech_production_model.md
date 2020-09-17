@@ -1,6 +1,6 @@
 ## Speech production model 
 
-While the process of speech production is subject to a variety of physical effects, a relatively simple model can be used to explain it.
+While the process of speech production is subject to a variety of physical effects, a relatively simple model can be used to explain it (see [Wikipedia article](https://en.wikipedia.org/wiki/Source%E2%80%93filter_model)).
 Components of human speech can be loosely classified as either voiced or unvoiced. 
 
 ### Speech production
