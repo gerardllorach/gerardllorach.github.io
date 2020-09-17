@@ -30,3 +30,9 @@ This step will create an AudioWorklet similar to the one required for file-wise 
   streamSource.connect(vocoderNode).connect(audioCtx.destination);
 ```
 Since a lot of interface options have the potential to interfere with each other, a change in the processing scheme is accompanied by a re-connection of all processing nodes, and depending on the user interface states the appropriate AudioWorklets are selected and set to the appropriate state. As an example, if the microphone input is activated via checking a box, the file selection dropdown menu for audio file input will be hidden.
+
+___
+
+[Next chapter](Chapter%206.%20Voice%20map.md)
+
+[Back to main](../README.md)
